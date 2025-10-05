@@ -62,6 +62,7 @@ namespace Cli {
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
+			init.Settings.EnableColour = true;
 
 			Bricli_Init(&_cli, &init);
         }
