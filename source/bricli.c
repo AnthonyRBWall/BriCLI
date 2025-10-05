@@ -104,213 +104,138 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
     // char seperator[] = " ";
     uint8_t argumentsFound = 0;
     // char *savePointer = NULL;
-	char *argumentsEnd = NULL;
+    char *argumentsEnd = NULL;
 
-	printf("[DEBUG] %s: %s\n", __func__, arguments);
+    // printf("[DEBUG] %s: %s\n", __func__, arguments);
 
-	// Make sure we actually have something to work with.
+    // Make sure we actually have something to work with.
     if (arguments == NULL || output == NULL || *arguments == '\0')
     {
         return 0;
     }
 
-	// Find the end of the string
-	argumentsEnd = arguments + strlen(arguments);
-	printf("[DEBUG] Args Tokenizer: %p to %p (strlen: %u)\n", arguments, argumentsEnd, (uint32_t)strlen(arguments));
+    // Find the end of the string
+    argumentsEnd = arguments + strlen(arguments);
+    // printf("[DEBUG] Args Tokenizer: %p to %p (strlen: %u)\n", arguments, argumentsEnd, (uint32_t)strlen(arguments));
 
-	// Setup tokenizer variables
-	char *argStart = arguments;
-	char *cursor = argStart;
-	bool isStringMode = false;
-	bool argFound = false;
+    // Setup tokenizer variables
+    char *argStart = arguments;
+    char *cursor = argStart;
+    bool isStringMode = false;
+    bool argFound = false;
 
-	// Run the tokenizer
-	while (argStart != argumentsEnd)
-	{
-		char *argEnd = strchr(cursor, ' ');
-		// bool isString = (*cursor == '\"') ? true : false;
+    // Run the tokenizer
+    while (argStart != argumentsEnd)
+    {
+        char *argEnd = strchr(cursor, ' ');
+        bool moreArgs = (argEnd != NULL);
 
-		// Normal parsing mode
-		if (!isStringMode)
-		{
-			// String found, switch mode
-			if (*cursor == '\"')
-			{
-				printf("[DEBUG] Entering string mode\n");
-				isStringMode = true;
-				// argStart++;
-				// cursor++;
+        // Normal parsing mode
+        if (!isStringMode)
+        {
+            // String found, switch mode
+            if (*cursor == '\"')
+            {
+                // printf("[DEBUG] Entering string mode\n");
+                isStringMode = true;
 
-				strcpy(cursor, (cursor + 1));
-				cursor++;
-				argumentsEnd--;
-			}
-			else
-			{
-				// Non-string arguments require no additional-processing
-				argFound = true;
-			}
-		}
-		// String parsing mode
-		else
-		{			
-			// Search for the end sting
-			cursor = strchr(cursor, '\"');
+                // Strip out the starting quote
+                strcpy(cursor, (cursor + 1));
+                argumentsEnd--;
+            }
+            else
+            {
+                // Non-string arguments require no additional-processing
+                argFound = true;
+            }
+        }
+        // String parsing mode
+        else
+        {
+            // Search for the end sting
+            cursor = strchr(cursor, '\"');
 
-			// Missing closing quote mark, exit
-			if (NULL == cursor)
-			{
-				printf("[DEBUG] Invalid string format\n");
-				return 0;
-			}
-			else if (*(cursor - 1) == '\\')
-			{
-				// Escaped quote mark, ignore
-				printf("[DEBUG] Skipping escape character\n");
-				cursor++;
-			}
-			else
-			{
-				// Closing quote mark, string found
-				printf("[DEBUG] Exiting string mode\n");
+            // Missing closing quote mark, exit
+            if (NULL == cursor)
+            {
+                // printf("[DEBUG] Invalid string format\n");
+                return 0;
+            }
+            else if (*(cursor - 1) == '\\')
+            {
+                // Escaped quote mark, ignore
+                // printf("[DEBUG] Skipping escape character\n");
+                cursor++;
+            }
+            else
+            {
+                // Closing quote mark, string found
+                // printf("[DEBUG] Exiting string mode\n");
 
-				// Strip the quote mark out
-				strcpy(cursor, (cursor + 1));
-				// *cursor = '\0';
-				// cursor++;
-				argumentsEnd--;
+                // Strip the quote mark out
+                strcpy(cursor, (cursor + 1));
+                argumentsEnd--;
 
-				// Move argEnd pointer and update tokenizer variables
-				argEnd = cursor;
-				argFound = true;
-				isStringMode = false;
-			}
-		}
+                // Move argEnd pointer and update tokenizer variables
+                argEnd = cursor;
+                argFound = true;
+                isStringMode = false;
+            }
+        }
 
-		// An argument was found
-		if (argFound)
-		{
-			// Store the argument
-			output[argumentsFound] = argStart;
-			argumentsFound++;
+        // An argument was found
+        if (argFound)
+        {
+            // Store the argument
+            output[argumentsFound] = argStart;
+            argumentsFound++;
 
-			// Walk through the argument and replace any escapes
-			cursor = strchr(argStart, '\\');
-			while (NULL != cursor)
-			{
-				cursor = strchr(cursor, '\\');
-				if (*cursor == '\\')
-				{
-					printf("[DEBUG] Replaced escaped character\n");
-					strcpy(cursor, (cursor + 1));
-					cursor++;
-					argumentsEnd--;
+            // Walk through the argument and replace any escapes
+            cursor = strchr(argStart, '\\');
+            while (NULL != cursor)
+            {
+                // printf("[DEBUG] Searching for '\\'\n");
+                cursor = strchr(cursor, '\\');
+                if (NULL != cursor && *cursor == '\\')
+                {
+                    // printf("[DEBUG] Replaced escaped character with %c\n", *(cursor+1));
+                    strcpy(cursor, (cursor + 1));
+                    // cursor++;
+                    argumentsEnd--;
 
-					if (NULL != argEnd)
-					{
-						argEnd--;
-					}
-				}
-			}
+                    if (NULL != argEnd)
+                    {
+                        // printf("[DEBUG] Moving argEnd\n");
+                        argEnd--;
+                    }
+                }
+            }
 
-			// Determine if more arguments to process
-			if (NULL == argEnd)
-			{
-				// No more arguments
-				printf("[DEBUG] Tokenizer finished\n");
-				argEnd = argumentsEnd;
-			}
-			else
-			{
-				// More arguments
-				printf("[DEBUG] More arguments: %020x\n", *argEnd);
-				*argEnd = '\0';
-				argEnd++;
-			}
 
-			printf("[DEBUG]: Arg%d: %s\n", argumentsFound, argStart);
+            // Process additional arguments if required
+            if (!moreArgs)
+            {
+                // No more arguments
+                // printf("[DEBUG] Tokenizer finished\n");
+                argEnd = argumentsEnd;
+            }
+            else
+            {
+                // More arguments
+                // printf("[DEBUG] More arguments: %020x\n", *argEnd);
+                *argEnd = '\0';
+                argEnd++;
+            }
 
-			// Reset tokenizer
-			argFound = false;
-			argStart = argEnd;
-			cursor = argStart;
+            // printf("[DEBUG] Arg%d: %s\n", argumentsFound, argStart);
 
-		}
-	}
+            // Reset tokenizer
+            argFound = false;
+            argStart = argEnd;
+            cursor = argStart;
 
-	// Split the arguments.
-    // #if BRICLI_USE_REENTRANT
-    //     char *token = (char *)strtok_r(arguments, seperator, &savePointer);
-    // #else
-    //     char *token = (char *)strtok(arguments, seperator);
-    // #endif // BRICLI_USE_REENTRANT
-    // while (token != NULL && argumentsFound < BRICLI_MAX_ARGUMENTS)
-    // {
-    //     // This is actually a string argument, need to skip to the next quote mark.
-    //     if (*token == '\"')
-    //     {
-    //         // Skip past the speech mark.
-    //         token++;
-
-	// 		// Calculate the next token point ahead of time.
-	// 		savePointer = token + strlen(token) + 1;
-            
-	// 		// If we aren't useing re-entrancy we need to calculate the next token point ahead of time.
-    //         #if !BRICLI_USE_REENTRANT
-    //             savePointer = token + strlen(token) + 1;
-    //         #endif // !BRICLI_USE_REENTRANT
-
-	// 		// If we've hit the end of the argument
-
-    //         // If strtok nulled out a space we need to re-add it.
-    //         if (savePointer != NULL && *(savePointer - 1) == '\0')
-    //         {
-    //             *(savePointer - 1) = ' ';
-    //         }
-
-    //         // Look for the closing quote mark.
-	// 		bool stringArgumentComplete = false;
-	// 		while (!stringArgumentComplete)
-	// 		{
-	// 			char* quoteToken = strchr(savePointer, '\"');
-	// 			printf("[DEBUG]: QuoteToken: %s\n", quoteToken);
-	// 			if (quoteToken == NULL)
-	// 			{
-	// 				// User didn't close out their speech mark so just bail out.
-	// 				return 0;
-	// 			}
-	// 			else if (*(quoteToken - 1) == '\\')
-	// 			{
-	// 				// This is actually an escaped quote mark, shift the string back one.
-	// 				printf("[DEBUG]: Argument before copy: %s\n", quoteToken);
-	// 				strcpy((quoteToken - 1), quoteToken);
-	// 				printf("[DEBUG]: Argument after copy: %s\n", quoteToken);
-	// 				savePointer = quoteToken;
-	// 			}
-	// 			else
-	// 			{
-	// 				// Closing quote found
-	// 				stringArgumentComplete = true;
-					
-	// 				// Replace the closing mark with a null character and step forward the save pointer.
-	// 				*quoteToken = '\0';
-	// 				savePointer = quoteToken + 1;
-	// 			}
-	// 		}
-    //     }
-
-    //     // Store this token and increment the arguments counter.
-    //     printf("[DEBUG]: Arg%d: %s\n", argumentsFound, token);
-	// 	output[argumentsFound] = token;
-    //     argumentsFound++;
-
-    //     // Get the next token.
-    //     #if BRICLI_USE_REENTRANT
-    //         token = (char *)strtok_r(NULL, seperator, &savePointer);
-    //     #else
-    //         token = (char *)strtok(NULL, seperator);
-    //     #endif // BRICLI_USE_REENTRANT
-    // }
+        }
+    }
 
     // Return how many arguments we were able to find.
     return argumentsFound;
@@ -318,7 +243,7 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
 
 /**
  * @brief Update the state of a given BriCLI handle, calling the event handler if set.
- * 
+ *
  * @param cli Pointer to the BriCLI instance to use.
  * @param newState The new state to set on the BriCLI instance.
  */
@@ -335,29 +260,29 @@ static inline void Bricli_ChangeState(BricliHandle_t* cli, BricliStates_t newSta
 }
 
 /**
- * @brief Validates whether the given command is available under the current auth scopes 
- * 
+ * @brief Validates whether the given command is available under the current auth scopes
+ *
  * @param cli Pointer to the BriCLI instance to use
  * @param command Pointer to a command to verify
  * @return bool True if the command is within auth scope, false otherwise
  */
 static bool Bricli_IsCommandInScope(BricliHandle_t* cli, BricliCommand_t *command)
-{	
-	if (command->AuthScopesRequired == BricliScopeAll)
-	{
-		// Command is available to all scopes
-		return true;
-	}
-	else if ((cli->AuthScopes & command->AuthScopesRequired) != 0)
-	{
-		// Command is available under granted scopes
-		return true;
-	}
-	else
-	{
-		// Command is not available
-		return false;
-	}
+{
+    if (command->AuthScopesRequired == BricliScopeAll)
+    {
+        // Command is available to all scopes
+        return true;
+    }
+    else if ((cli->AuthScopes & command->AuthScopesRequired) != 0)
+    {
+        // Command is available under granted scopes
+        return true;
+    }
+    else
+    {
+        // Command is not available
+        return false;
+    }
 }
 
 // ===========================
@@ -392,16 +317,16 @@ static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs
  */
 static const BricliSystemCommand_t _systemCommands[] =
 {
-	{"help", Bricli_SystemHandlerHelp, "Displays this help message"},
-	{"clear", Bricli_SystemHandlerClear, "Clears the terminal"},
-	{"login", Bricli_SystemHandlerLogin, "Login to the terminal"},
-	{"logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
-	{NULL, NULL, NULL}
+    {"help", Bricli_SystemHandlerHelp, "Displays this help message"},
+    {"clear", Bricli_SystemHandlerClear, "Clears the terminal"},
+    {"login", Bricli_SystemHandlerLogin, "Login to the terminal"},
+    {"logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
+    {NULL, NULL, NULL}
 };
 
 /**
  * @brief System command for displaying a help message
- * 
+ *
  * @param cli Pointer to the CLI instance
  * @param numberOfArgs The number of arguments received
  * @param args The arguments list
@@ -409,69 +334,69 @@ static const BricliSystemCommand_t _systemCommands[] =
  */
 static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
 {
-	// Unused parameters
-	(void)numberOfArgs;
-	(void)args;
+    // Unused parameters
+    (void)numberOfArgs;
+    (void)args;
 
-	// Print the system commands first.
-	const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
-	while(systemCommand->Name != NULL)
-	{
-		if (cli->SendEol == NULL)
-		{
-			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
-		}
-		else
-		{
-			Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->SendEol);
-		}
-
-		// Increment the pointer
-		systemCommand++;
-	}
-	
-	// Print all registered user commands.
-	BricliCommand_t *command = &cli->CommandList[0];
-	while(command->Name != NULL)
+    // Print the system commands first.
+    const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
+    while(systemCommand->Name != NULL)
     {
-		// Only display help if the command is available to the current auth scope
-		if (Bricli_IsCommandInScope(cli, command))
-		{
-			// Send the help message for each command.
-			if (command->HelpMessage == NULL)
-			{
-				if (cli->SendEol == NULL)
-				{
-					Bricli_PrintF(cli, "%s%s", command->Name, cli->Eol);
-				}
-				else
-				{
-					Bricli_PrintF(cli, "%s%s", command->Name, cli->SendEol);
-				}
-			}
-			else
-			{
-				if (cli->SendEol == NULL)
-				{
-					Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
-				}
-				else
-				{
-					Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
-				}
-			}
-		}
+        if (cli->SendEol == NULL)
+        {
+            Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
+        }
+        else
+        {
+            Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->SendEol);
+        }
 
-		// Increment the pointer
-		command++;
+        // Increment the pointer
+        systemCommand++;
     }
 
-	return BricliOk;
+    // Print all registered user commands.
+    BricliCommand_t *command = &cli->CommandList[0];
+    while(command->Name != NULL)
+    {
+        // Only display help if the command is available to the current auth scope
+        if (Bricli_IsCommandInScope(cli, command))
+        {
+            // Send the help message for each command.
+            if (command->HelpMessage == NULL)
+            {
+                if (cli->SendEol == NULL)
+                {
+                    Bricli_PrintF(cli, "%s%s", command->Name, cli->Eol);
+                }
+                else
+                {
+                    Bricli_PrintF(cli, "%s%s", command->Name, cli->SendEol);
+                }
+            }
+            else
+            {
+                if (cli->SendEol == NULL)
+                {
+                    Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
+                }
+                else
+                {
+                    Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
+                }
+            }
+        }
+
+        // Increment the pointer
+        command++;
+    }
+
+    return BricliOk;
 }
 
 /**
  * @brief System command for clearing the buffer
- * 
+ *
  * @param cli Pointer to the CLI instance
  * @param numberOfArgs The number of arguments received
  * @param args The arguments list
@@ -479,17 +404,17 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
  */
 static int Bricli_SystemHandlerClear(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
 {
-	// Unused parameters
-	(void)numberOfArgs;
-	(void)args;
+    // Unused parameters
+    (void)numberOfArgs;
+    (void)args;
 
-	Bricli_ClearScreen(cli);
-	return BricliOk;
+    Bricli_ClearScreen(cli);
+    return BricliOk;
 }
 
 /**
  * @brief System command for logging in as an authenticated user
- * 
+ *
  * @param cli Pointer to the CLI instance
  * @param numberOfArgs The number of arguments received
  * @param args The arguments list
@@ -497,76 +422,76 @@ static int Bricli_SystemHandlerClear(BricliHandle_t *cli, uint32_t numberOfArgs,
  */
 static int Bricli_SystemHandlerLogin(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
 {
-	int result = -1;
+    int result = -1;
 
-	if (numberOfArgs < 2)
-	{
-		Bricli_WriteStringColouredLine(cli, "ERROR: login requires 2 arguments!", BricliTextRed);
-		goto cleanup;
-	}
+    if (numberOfArgs < 2)
+    {
+        Bricli_WriteStringColouredLine(cli, "ERROR: login requires 2 arguments!", BricliTextRed);
+        goto cleanup;
+    }
 
-	if (NULL == cli->AuthList)
-	{
-		Bricli_WriteStringColouredLine(cli, "ERROR: No authentication provider registered", BricliTextRed);
-		goto cleanup;
-	}
+    if (NULL == cli->AuthList)
+    {
+        Bricli_WriteStringColouredLine(cli, "ERROR: No authentication provider registered", BricliTextRed);
+        goto cleanup;
+    }
 
-	// Helper pointers for our arguments
-	const char *user = args[0];
-	const char *pass = args[1];
+    // Helper pointers for our arguments
+    const char *user = args[0];
+    const char *pass = args[1];
 
-	// Search the auth provider for a matching user
-	const BricliAuthEntry_t *authEntry = &cli->AuthList[0];
-	while (NULL != authEntry->Username)
-	{
-		// Search for a matching username
-		if (strcmp(user, authEntry->Username) == 0)
-		{
-			// Search for a matching password
-			if (strcmp(pass, authEntry->Password) == 0)
-			{
-				// Update our active scopes
-				cli->AuthScopes = authEntry->Scopes;
+    // Search the auth provider for a matching user
+    const BricliAuthEntry_t *authEntry = &cli->AuthList[0];
+    while (NULL != authEntry->Username)
+    {
+        // Search for a matching username
+        if (strcmp(user, authEntry->Username) == 0)
+        {
+            // Search for a matching password
+            if (strcmp(pass, authEntry->Password) == 0)
+            {
+                // Update our active scopes
+                cli->AuthScopes = authEntry->Scopes;
 
-				// Success
-				result = 0;
-				if (cli->SendEol == NULL)
-				{
-					Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->Eol);
-				}
-				else
-				{
-					Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->SendEol);
-				}
+                // Success
+                result = 0;
+                if (cli->SendEol == NULL)
+                {
+                    Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->Eol);
+                }
+                else
+                {
+                    Bricli_PrintF(cli, "Logged in as %s%s", authEntry->Username, cli->SendEol);
+                }
 
-				goto cleanup;
-			}
-			else
-			{
-				// Password mismatch
-				result = -2;
-				goto cleanup;
-			}
-		}
-		
-		// Increment the pointer
-		authEntry++;
-	}
+                goto cleanup;
+            }
+            else
+            {
+                // Password mismatch
+                result = -2;
+                goto cleanup;
+            }
+        }
 
-	// If we get here then we didn't find a matching user
-	result = -2;
+        // Increment the pointer
+        authEntry++;
+    }
+
+    // If we get here then we didn't find a matching user
+    result = -2;
 
 cleanup:
-	// If we have an error report back
-	if (result == -2)
-		Bricli_WriteStringColouredLine(cli, "ERROR: Invalid username or password", BricliTextRed);
+    // If we have an error report back
+    if (result == -2)
+        Bricli_WriteStringColouredLine(cli, "ERROR: Invalid username or password", BricliTextRed);
 
-	return result;
+    return result;
 }
 
 /**
  * @brief System command for logging out of the current authenticated user
- * 
+ *
  * @param cli Pointer to the CLI instance
  * @param numberOfArgs The number of arguments received
  * @param args The arguments list
@@ -574,21 +499,21 @@ cleanup:
  */
 static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[])
 {
-	int result = 0;
+    int result = 0;
 
-	if (cli->AuthScopes != BricliScopeAll)
-	{
-		// Reset auth scopes
-		cli->AuthScopes = BricliScopeAll;
-		Bricli_WriteString(cli, "Logged out of session\n");
-	}
-	else
-	{
-		// Not logged in, so can't log out
-		Bricli_WriteString(cli, "No active login session found\n");
-	}
+    if (cli->AuthScopes != BricliScopeAll)
+    {
+        // Reset auth scopes
+        cli->AuthScopes = BricliScopeAll;
+        Bricli_WriteString(cli, "Logged out of session\n");
+    }
+    else
+    {
+        // Not logged in, so can't log out
+        Bricli_WriteString(cli, "No active login session found\n");
+    }
 
-	return result;
+    return result;
 }
 
 // ==============================
@@ -597,80 +522,80 @@ static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs
 
 BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
 {
-	BricliErrors_t result = BricliUnknown;
+    BricliErrors_t result = BricliUnknown;
 
-	// Validate pointers
-	if (NULL == cli || NULL == settings)
-	{
-		BRICLI_LOG("BriCLI: NULL pointer in %s\n", __func__);
-		result = BricliBadParameter;
-		goto cleanup;
-	}
+    // Validate pointers
+    if (NULL == cli || NULL == settings)
+    {
+        BRICLI_LOG("BriCLI: NULL pointer in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
+    }
 
-	// Validate buffer settings
-	if (NULL == settings->RxBuffer || 0 == settings->RxBufferSize)
-	{
-		BRICLI_LOG("BriCLI: Invalid RX buffer in %s\n", __func__);
-		result = BricliBadParameter;
-		goto cleanup;
-	}
+    // Validate buffer settings
+    if (NULL == settings->RxBuffer || 0 == settings->RxBufferSize)
+    {
+        BRICLI_LOG("BriCLI: Invalid RX buffer in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
+    }
 
-	// Validate command list settings
-	if (NULL == settings->CommandList || NULL == settings->CommandList[0].Name)
-	{
-		BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
-		result = BricliBadParameter;
-		goto cleanup;
-	}
+    // Validate command list settings
+    if (NULL == settings->CommandList || NULL == settings->CommandList[0].Name)
+    {
+        BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
+    }
 
-	// Validate BSP Write function
-	if (NULL == settings->BspWrite)
-	{
-		BRICLI_LOG("BriCLI: Invalid BspWrite in %s\n", __func__);
-		result = BricliBadParameter;
-		goto cleanup;
-	}
-	
-	// Initialise the CLI to zero
-	memset(cli, 0, sizeof(BricliHandle_t));
+    // Validate BSP Write function
+    if (NULL == settings->BspWrite)
+    {
+        BRICLI_LOG("BriCLI: Invalid BspWrite in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
+    }
 
-	// EOL string
-	if (NULL != settings->Eol)
-		cli->Eol = settings->Eol;
-	else
-		cli->Eol = BRICLI_DEFAULT_EOL;
-	
-	// Prompt string
-	if (NULL != settings->Prompt)
-		cli->Prompt = settings->Prompt;
-	else
-		cli->Prompt = BRICLI_DEFAULT_PROMPT;
+    // Initialise the CLI to zero
+    memset(cli, 0, sizeof(BricliHandle_t));
 
-	// RX Buffer settings
-	cli->RxBuffer = settings->RxBuffer;
-	cli->RxBufferSize = settings->RxBufferSize;
+    // EOL string
+    if (NULL != settings->Eol)
+        cli->Eol = settings->Eol;
+    else
+        cli->Eol = BRICLI_DEFAULT_EOL;
 
-	// Command List settings
-	cli->CommandList = settings->CommandList;
+    // Prompt string
+    if (NULL != settings->Prompt)
+        cli->Prompt = settings->Prompt;
+    else
+        cli->Prompt = BRICLI_DEFAULT_PROMPT;
 
-	// BSP settings
-	cli->BspWrite = settings->BspWrite;
-	
-	// Event settings
-	cli->OnStateChanged = settings->OnStateChanged;
+    // RX Buffer settings
+    cli->RxBuffer = settings->RxBuffer;
+    cli->RxBufferSize = settings->RxBufferSize;
 
-	// Flag settings
-	cli->LocalEcho = settings->LocalEcho;
+    // Command List settings
+    cli->CommandList = settings->CommandList;
 
-	// Auth list
-	if (NULL != settings->AuthList)
-		cli->AuthList = settings->AuthList;
+    // BSP settings
+    cli->BspWrite = settings->BspWrite;
 
-	// Success
-	result = BricliOk;
+    // Event settings
+    cli->OnStateChanged = settings->OnStateChanged;
+
+    // Flag settings
+    cli->LocalEcho = settings->LocalEcho;
+
+    // Auth list
+    if (NULL != settings->AuthList)
+        cli->AuthList = settings->AuthList;
+
+    // Success
+    result = BricliOk;
 
 cleanup:
-	return result;
+    return result;
 }
 
 #if BRICLI_USE_COLOUR
@@ -738,13 +663,13 @@ int Bricli_ParseEscapeCode(BricliHandle_t *cli)
 
 /**
  * @brief Removes a command from the receive buffer, moving any remaining commands to the front.
- * 
+ *
  * @param cli Pointer to a BriCLI instance.
  */
 void Bricli_ClearCommand(BricliHandle_t *cli)
 {
     size_t nextCommand = 0;
-    
+
     // If there is another command it will always be EOL length past our old command.
     nextCommand = strlen(cli->RxBuffer) + strlen(cli->Eol);
 
@@ -757,7 +682,7 @@ void Bricli_ClearCommand(BricliHandle_t *cli)
     {
         // Remove the number of bytes we have handled.
         cli->PendingBytes -= nextCommand;
-        
+
         // Shift next command to start of buffer
         memmove(cli->RxBuffer, &cli->RxBuffer[nextCommand], cli->PendingBytes);
         memset(&cli->RxBuffer[cli->PendingBytes], 0, nextCommand);
@@ -830,7 +755,7 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 {
     char command[BRICLI_MAX_COMMAND_LEN + 1] = {0};
     char arguments[BRICLI_ARGUMENT_BUFFER_LEN] = {0};
-	char *ArgumentsFound[BRICLI_MAX_ARGUMENTS] = {0};
+    char *ArgumentsFound[BRICLI_MAX_ARGUMENTS] = {0};
     uint32_t commandLength = 0;
     uint32_t argumentLength = 0;
 
@@ -885,83 +810,83 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     }
     memcpy(command, (void *)cli->RxBuffer, commandLength);
 
-	// Extract additional arguments.
-	uint8_t numberOfArguments = Bricli_ExtractArguments(arguments, ArgumentsFound);
+    // Extract additional arguments.
+    uint8_t numberOfArguments = Bricli_ExtractArguments(arguments, ArgumentsFound);
 
     // Check if this is a system command.
-	const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
-	while (systemCommand->Name != NULL)
-	{
-		if (strcmp(command, systemCommand->Name) == 0)
-		{
-			// Call the command's handler function.
+    const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
+    while (systemCommand->Name != NULL)
+    {
+        if (strcmp(command, systemCommand->Name) == 0)
+        {
+            // Call the command's handler function.
             Bricli_ChangeState(cli, BricliStateHandlerRunning);
-			systemCommand->Handler(cli, numberOfArguments, ArgumentsFound);
+            systemCommand->Handler(cli, numberOfArguments, ArgumentsFound);
             Bricli_ChangeState(cli, BricliStateFinished);
 
-			return BricliOk;
-		}
+            return BricliOk;
+        }
 
-		// Increment the pointer
-		systemCommand++;
-	}
+        // Increment the pointer
+        systemCommand++;
+    }
 
-	// Not a system command so look to our command list for a match.
-	BricliCommand_t *cliCommand = &cli->CommandList[0];
-	while(cliCommand->Name != NULL)
+    // Not a system command so look to our command list for a match.
+    BricliCommand_t *cliCommand = &cli->CommandList[0];
+    while(cliCommand->Name != NULL)
     {
 
         // Check if we have found a match.
         if (strcmp(command, cliCommand->Name) == 0)
         {
-			int result = BricliUnknown;
+            int result = BricliUnknown;
 
-			// Check our authentication scopes
-			if (Bricli_IsCommandInScope(cli, cliCommand))
-			{
-				// Call the command's handler function.
-				Bricli_ChangeState(cli, BricliStateHandlerRunning);
-				result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
-				Bricli_ChangeState(cli, BricliStateFinished);
-	
-				// Check the result code.
-				if (result < 0)
-				{
-					// If enabled, display the error code to the user.
-				#if BRICLI_SHOW_COMMAND_ERRORS
-					if (cli->SendEol == NULL)
-					{
-						BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
-					}
-					else
-					{
-						BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
-					}
-				#endif // BRICLI_SHOW_COMMAND_ERRORS
-	
-					cli->LastError = BricliErrorCommand;
-				}
-			}
-			else
-			{
-				cli->LastError = BricliErrorInternal;
-				result = BricliUnauthorized;
+            // Check our authentication scopes
+            if (Bricli_IsCommandInScope(cli, cliCommand))
+            {
+                // Call the command's handler function.
+                Bricli_ChangeState(cli, BricliStateHandlerRunning);
+                result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
+                Bricli_ChangeState(cli, BricliStateFinished);
 
-				if (cli->SendEol == NULL)
-				{
-					Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->Eol);
-				}
-				else
-				{
-					Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->SendEol);
-				}
-			}
-			
+                // Check the result code.
+                if (result < 0)
+                {
+                    // If enabled, display the error code to the user.
+                #if BRICLI_SHOW_COMMAND_ERRORS
+                    if (cli->SendEol == NULL)
+                    {
+                        BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+                    }
+                    else
+                    {
+                        BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
+                    }
+                #endif // BRICLI_SHOW_COMMAND_ERRORS
+
+                    cli->LastError = BricliErrorCommand;
+                }
+            }
+            else
+            {
+                cli->LastError = BricliErrorInternal;
+                result = BricliUnauthorized;
+
+                if (cli->SendEol == NULL)
+                {
+                    Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->Eol);
+                }
+                else
+                {
+                    Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->SendEol);
+                }
+            }
+
             return result;
         }
 
-		// Increment the pointer
-		cliCommand++;
+        // Increment the pointer
+        cliCommand++;
     }
 
     // If we get here then we failed to find a valid command in the list.
@@ -1054,7 +979,7 @@ size_t Bricli_SplitOnEol(BricliHandle_t *cli)
     #else
         token = (char *)strtok(cli->RxBuffer, cli->Eol);
     #endif // BRICLI_USE_REENTRANT
-    
+
     while (token != NULL)
     {
         // Increment the number of commands and get the next token.
@@ -1169,8 +1094,8 @@ BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, u
   * @param cli Pointer to the CLI instance to use.
   */
 void Bricli_Backspace(BricliHandle_t *cli)
-{   
-    
+{
+
     // If there is less than 2 bytes in the buffer there is nothing to be deleted.
     if (cli->PendingBytes < 2)
     {
@@ -1199,7 +1124,7 @@ void Bricli_Backspace(BricliHandle_t *cli)
   */
 int Bricli_PrintHelp(BricliHandle_t *cli)
 {
-	return Bricli_SystemHandlerHelp(cli, 0, NULL);
+    return Bricli_SystemHandlerHelp(cli, 0, NULL);
 }
 
 /**
@@ -1232,7 +1157,7 @@ int Bricli_PrintF(BricliHandle_t *cli, const char *format, ...)
 }
 
 /** @brief Helper function that clears the internal buffer and resets the CLI state.
- * 
+ *
  * @param cli Pointer to a BriCLI instance.
  */
 void Bricli_Reset(BricliHandle_t *cli)
