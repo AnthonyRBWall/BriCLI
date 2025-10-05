@@ -862,16 +862,17 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
                 if (result < 0)
                 {
                     // If enabled, display the error code to the user.
-                #if BRICLI_SHOW_COMMAND_ERRORS
-                    if (cli->SendEol == NULL)
+                    if (cli->Settings.ShowHandlerErrors)
                     {
-                        BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+                        if (cli->SendEol == NULL)
+                        {
+                            BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+                        }
+                        else
+                        {
+                            BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
+                        }
                     }
-                    else
-                    {
-                        BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
-                    }
-                #endif // BRICLI_SHOW_COMMAND_ERRORS
 
                     cli->LastError = BricliErrorCommand;
                 }
@@ -909,9 +910,10 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     }
 
     // If enabled, print help on an unknown command.
-#if BRICLI_SHOW_HELP_ON_ERROR
-    Bricli_PrintHelp(cli);
-#endif // BRICLI_SHOW_HELP_ON_ERROR
+    if (cli->Settings.ShowHelpOnError)
+    {
+        Bricli_PrintHelp(cli);
+    }
 
     // Return that this is an unknown command.
     cli->LastError = BricliErrorInternal;

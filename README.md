@@ -52,10 +52,7 @@ There are several settings that can be applied to BriCLI via the `bricli_config.
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| **BRICLI_SHOW_COMMAND_ERRORS** | On | When on, BriCLI will automatically report command handler errors to the user |
-| **BRICLI_SHOW_HELP_ON_ERROR** | On | When on, BriCLI will automatically show the help message when an unknown command is received |
 | **BRICLI_USE_REENTRANT** | Off | When on, BriCLI will use the thread safe `strtok_r` in place of `strtok` |
-| **BRICLI_USE_COLOUR** | On | When on, enables the use of VT100 colour commands |
 | **BRICLI_MAX_COMMAND_LEN** | 10 | The maximum length any user command can be |
 | **BRICLI_ARGUMENT_BUFFER_LEN** | 70 | The length of the internal arguments buffer |
 | **BRICLI_MAX_ARGUMENTS** | 3 | The maximum number of arguments BriCLI can parse |
@@ -101,6 +98,7 @@ int main(void)
     cliInit.RxBuffer = _rxBuffer;
     cliInit.RxBufferSize = RX_BUFFER_SIZE;
     cliInit.Settings.EnableLocalEcho = true;
+    cliInit.Settings.EnableColour = true; // Set this to have BriCLI use VT100 colours
 
 	Bricli_Init(&cli, &cliInit);
     
