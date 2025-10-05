@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "error.h"
+#include "settings.h"
 
 /**
  * @brief States that BriCLI can be in during execution.
@@ -104,6 +105,7 @@ typedef struct _BricliHandle_t
     char*                   RxBuffer;
     uint32_t                RxBufferSize;
     char *                  SendEol;
+    BricliSettings_t        Settings;
     BricliStates_t         	State;
     Bricli_StateChanged    	OnStateChanged;
 } BricliHandle_t;
