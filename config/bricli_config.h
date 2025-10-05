@@ -46,20 +46,4 @@
  */
 #define BRICLI_LOG(...) printf(__VA_ARGS__)
 
-// ===========================
-// ===== Colour Settings =====
-// ===========================
-
-// Enables the use of VT100 background colours, default on
-#define BRICLI_USE_BACKGROUNDS 1
-
-// Enables the use of VT100 bold text colours, default on
-#define BRICLI_USE_BOLD 1
-
-// Enables the use of VT100 text colours, default on
-#define BRICLI_USE_TEXT_COLOURS 1
-
-// Enables the use of VT100 underline colours, default on
-#define BRICLI_USE_UNDERLINE 1
-
 #endif // BRICLI_CONFIG_H

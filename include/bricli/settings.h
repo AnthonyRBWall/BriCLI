@@ -1,9 +1,10 @@
 #ifndef BRICLI_SETTINGS_H
 #define BRICLI_SETTINGS_H
 
-#ifndef BRICLI_MAX_COMMAND_LEN
-#define BRICLI_MAX_COMMAND_LEN 10 // Sets the maximum command name length.
-#endif // BRICLI_MAX_COMMAND_LEN
+
+// ===========================
+// ===== System Settings =====
+// ===========================
 
 #ifndef BRICLI_ARGUMENT_BUFFER_LEN
 #define BRICLI_ARGUMENT_BUFFER_LEN 70 // The maximum number of bytes available for argument storage.
@@ -13,13 +14,17 @@
 #define BRICLI_MAX_ARGUMENTS 3 // Sets the maximum number of arguments that BriCLI can find.
 #endif // BRICLI_MAX_ARGUMENTS
 
-//#ifndef BRICLI_RX_BUFFER_LEN
-//#define BRICLI_RX_BUFFER_LEN 80 // Sets the character
-//#endif // BRICLI_RX_BUFFER_LEN
+#ifndef BRICLI_MAX_COMMAND_LEN
+#define BRICLI_MAX_COMMAND_LEN 10 // Sets the maximum command name length.
+#endif // BRICLI_MAX_COMMAND_LEN
 
 #ifndef BRICLI_PRINT_MESSAGE_SIZE
 #define BRICLI_PRINT_MESSAGE_SIZE 80 // Sets the maximum length of a custom PrintF message.
 #endif // BRICLI_PRINT_MESSAGE_SIZE
+
+// ============================
+// ===== Default Settings =====
+// ============================
 
 #ifndef BRICLI_DEFAULT_EOL
 #define BRICLI_DEFAULT_EOL				"\n" // The default EoL string to be used when none is provided to init
@@ -28,6 +33,14 @@
 #ifndef BRICLI_DEFAULT_PROMPT
 #define BRICLI_DEFAULT_PROMPT			">> " // The default prompt string to be used when none is provided to init
 #endif // BRICLI_DEFAULT_PROMPT
+
+// ==============================
+// ===== Logging Settings =======
+// ==============================
+
+#ifndef BRICLI_LOG
+#define BRICLI_LOG(...) // Logging function for displaying internal behaviour
+#endif // BRICLI_LOG
 
 /**
  * @brief Runtime configurable settings
