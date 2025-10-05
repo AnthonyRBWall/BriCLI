@@ -77,6 +77,14 @@ int main(int argc, char const *argv[])
     init.RxBuffer = _rxBuffer;
     init.RxBufferSize = RX_BUFFER_SIZE;
     init.CommandList = _commandList;
+
+    // Configure runtime settings
+    init.Settings.EnableAuth = true;
+    init.Settings.EnableColour = true;
+    init.Settings.EnableLocalEcho = true;
+    init.Settings.ShowHelpOnError = true;
+    init.Settings.ShowHandlerErrors = true;
+
 	Bricli_Init(&_cli, &init);
 
     // Send the initial prompt.

@@ -62,6 +62,7 @@ namespace Cli {
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
+			init.Settings.EnableColour = true;
 
 			Bricli_Init(&_cli, &init);
         }
@@ -158,7 +159,7 @@ namespace Cli {
 
     TEST_F(SendTest, Help)
     {
-        uint32_t NumberOfCommands = (4 + 1); // 4 system command calls with automatic Eols plus however many custom commands.
+        uint32_t NumberOfCommands = (2 + 1); // 2 system command calls with automatic Eols plus however many custom commands.
 
         // Print the help message and make sure BspWrite is called.
         EXPECT_EQ(0, Bricli_PrintHelp(&_cli));
@@ -167,7 +168,6 @@ namespace Cli {
         // Make sure our system commands are called.
         EXPECT_STREQ(&_stringHistory[0][0], "help - Displays this help message\n");
         EXPECT_STREQ(&_stringHistory[1][0], "clear - Clears the terminal\n");
-        EXPECT_STREQ(&_stringHistory[2][0], "login - Login to the terminal\n");
     }
 
     TEST_F(SendTest, SendEol)

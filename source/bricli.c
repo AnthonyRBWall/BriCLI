@@ -27,65 +27,47 @@
 // ===== Constants =====
 // =====================
 
-#if BRICLI_USE_COLOUR
-static const char *_colourReset = "\e[0m";
-
-#if BRICLI_USE_TEXT_COLOURS
-static const char *_colourTable[] =
+// Contains VT100 colour codes
+static const char *_colourTable[BricliColourCount] =
 {
-    "\e[0;30m", // Black
-    "\e[0;31m", // Red
-    "\e[0;32m", // Green
-    "\e[0;33m", // Yellow
-    "\e[0;34m", // Blue
-    "\e[0;35m", // Magenta
-    "\e[0;36m", // Cyan
-    "\e[0;37m"  // White
-};
-#endif // BRICLI_USE_TEXT_COLOURS
+    "\e[0m",    // Control - Reset
 
-#if BRICLI_USE_BOLD
-static const char *_boldTable[] =
-{
-    "\e[1;30m", // Bold Black
-    "\e[1;31m", // Bold Red
-    "\e[1;32m", // Bold Green
-    "\e[1;33m", // Bold Yellow
-    "\e[1;34m", // Bold Blue
-    "\e[1;35m", // Bold Magenta
-    "\e[1;36m", // Bold Cyan
-    "\e[1;37m"  // Bold White
-};
-#endif // BRICLI_USE_BOLD
+    "\e[0;30m", // Text - Black
+    "\e[0;31m", // Text - Red
+    "\e[0;32m", // Text - Green
+    "\e[0;33m", // Text - Yellow
+    "\e[0;34m", // Text - Blue
+    "\e[0;35m", // Text - Magenta
+    "\e[0;36m", // Text - Cyan
+    "\e[0;37m", // Text - White
 
-#if BRICLI_USE_UNDERLINE
-static const char *_underlineTable[] =
-{
-    "\e[4;30m", // Underline Black
-    "\e[4;31m", // Underline Red
-    "\e[4;32m", // Underline Green
-    "\e[4;33m", // Underline Yellow
-    "\e[4;34m", // Underline Blue
-    "\e[4;35m", // Underline Magenta
-    "\e[4;36m", // Underline Cyan
-    "\e[4;37m"  // Underline White
-};
-#endif // BRICLI_USE_UNDERLINE
+    "\e[1;30m", // Bold - Black
+    "\e[1;31m", // Bold - Red
+    "\e[1;32m", // Bold - Green
+    "\e[1;33m", // Bold - Yellow
+    "\e[1;34m", // Bold - Blue
+    "\e[1;35m", // Bold - Magenta
+    "\e[1;36m", // Bold - Cyan
+    "\e[1;37m", // Bold - White
 
-#if BRICLI_USE_BACKGROUNDS
-static const char *_backgroundTable[] =
-{
-    "\e[40m", // Black Background
-    "\e[41m", // Red Background
-    "\e[42m", // Green Background
-    "\e[43m", // Yellow Background
-    "\e[44m", // Blue Background
-    "\e[45m", // Magenta Background
-    "\e[46m", // Cyan Background
-    "\e[47m"  // White Background
+    "\e[4;30m", // Underline - Black
+    "\e[4;31m", // Underline - Red
+    "\e[4;32m", // Underline - Green
+    "\e[4;33m", // Underline - Yellow
+    "\e[4;34m", // Underline - Blue
+    "\e[4;35m", // Underline - Magenta
+    "\e[4;36m", // Underline - Cyan
+    "\e[4;37m", // Underline - White
+
+    "\e[40m", // Background - Black
+    "\e[41m", // Background - Red
+    "\e[42m", // Background - Green
+    "\e[43m", // Background - Yellow
+    "\e[44m", // Background - Blue
+    "\e[45m", // Background - Magenta
+    "\e[46m", // Background - Cyan
+    "\e[47m"  // Background - White
 };
-#endif // BRICLI_USE_BACKGROUNDS
-#endif // BRICLI_USE_COLOUR
 
 // ===========================
 // ===== Local Functions =====
@@ -273,7 +255,7 @@ static bool Bricli_IsCommandInScope(BricliHandle_t* cli, BricliCommand_t *comman
         // Command is available to all scopes
         return true;
     }
-    else if ((cli->AuthScopes & command->AuthScopesRequired) != 0)
+    else if (cli->Settings.EnableAuth && ((cli->AuthScopes & command->AuthScopesRequired) != 0) )
     {
         // Command is available under granted scopes
         return true;
@@ -298,13 +280,26 @@ static bool Bricli_IsCommandInScope(BricliHandle_t* cli, BricliCommand_t *comman
 typedef int (*Bricli_SystemCommandHandler)(BricliHandle_t *cli, uint32_t numberOfArgs, char* args[]);
 
 /**
+ * @brief Internal IDs for tracking system commands
+ */
+typedef enum _BricliSystemCommandId_t
+{
+    BricliSystemCommandNone,
+    BricliSystemCommandHelp,
+    BricliSystemCommandClear,
+    BricliSystemCommandLogin,
+    BricliSystemCommandLogout
+} BricliSystemCommandId_t;
+
+/**
  * @brief Internal command handler
  */
 typedef struct _BricliSystemCommand_t
 {
-    const char*             Name;                   /*<< Command name. */
-    Bricli_SystemCommandHandler   Handler;                /*<< Handler function for this command. */
-    const char*             HelpMessage;            /*<< Optional message to be displayed by the help command. */
+    BricliSystemCommandId_t         ID;             /*<< Command ID */
+    const char*                     Name;           /*<< Command name. */
+    Bricli_SystemCommandHandler     Handler;        /*<< Handler function for this command. */
+    const char*                     HelpMessage;    /*<< Optional message to be displayed by the help command. */
 } BricliSystemCommand_t;
 
 static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[]);
@@ -317,11 +312,11 @@ static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs
  */
 static const BricliSystemCommand_t _systemCommands[] =
 {
-    {"help", Bricli_SystemHandlerHelp, "Displays this help message"},
-    {"clear", Bricli_SystemHandlerClear, "Clears the terminal"},
-    {"login", Bricli_SystemHandlerLogin, "Login to the terminal"},
-    {"logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
-    {NULL, NULL, NULL}
+    {BricliSystemCommandHelp, "help", Bricli_SystemHandlerHelp, "Displays this help message"},
+    {BricliSystemCommandClear, "clear", Bricli_SystemHandlerClear, "Clears the terminal"},
+    {BricliSystemCommandLogin, "login", Bricli_SystemHandlerLogin, "Login to the terminal"},
+    {BricliSystemCommandLogout, "logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
+    {BricliSystemCommandNone, NULL, NULL, NULL}
 };
 
 /**
@@ -340,8 +335,15 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 
     // Print the system commands first.
     const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
-    while(systemCommand->Name != NULL)
+    while(systemCommand->ID != BricliSystemCommandNone)
     {
+        // Don't display system auth commands if we aren't using auth
+        if (!cli->Settings.EnableAuth && (systemCommand->ID == BricliSystemCommandLogin || systemCommand->ID == BricliSystemCommandLogout))
+        {
+            systemCommand++;
+            continue;
+        }
+        
         if (cli->SendEol == NULL)
         {
             Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
@@ -520,12 +522,19 @@ static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs
 // ===== Exported Functions =====
 // ==============================
 
-BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
+/**
+ * @brief Initialises a BriCLI instance using the given settings list
+ * 
+ * @param cli Pointer to a BriCLI instance to initialise
+ * @param init Pointer to a settings list to use for instance customization
+ * @return BricliErrors_t 
+ */
+BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* init)
 {
     BricliErrors_t result = BricliUnknown;
 
     // Validate pointers
-    if (NULL == cli || NULL == settings)
+    if (NULL == cli || NULL == init)
     {
         BRICLI_LOG("BriCLI: NULL pointer in %s\n", __func__);
         result = BricliBadParameter;
@@ -533,7 +542,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     }
 
     // Validate buffer settings
-    if (NULL == settings->RxBuffer || 0 == settings->RxBufferSize)
+    if (NULL == init->RxBuffer || 0 == init->RxBufferSize)
     {
         BRICLI_LOG("BriCLI: Invalid RX buffer in %s\n", __func__);
         result = BricliBadParameter;
@@ -541,7 +550,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     }
 
     // Validate command list settings
-    if (NULL == settings->CommandList || NULL == settings->CommandList[0].Name)
+    if (NULL == init->CommandList || NULL == init->CommandList[0].Name)
     {
         BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
         result = BricliBadParameter;
@@ -549,7 +558,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     }
 
     // Validate BSP Write function
-    if (NULL == settings->BspWrite)
+    if (NULL == init->BspWrite)
     {
         BRICLI_LOG("BriCLI: Invalid BspWrite in %s\n", __func__);
         result = BricliBadParameter;
@@ -560,36 +569,36 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     memset(cli, 0, sizeof(BricliHandle_t));
 
     // EOL string
-    if (NULL != settings->Eol)
-        cli->Eol = settings->Eol;
+    if (NULL != init->Eol)
+        cli->Eol = init->Eol;
     else
         cli->Eol = BRICLI_DEFAULT_EOL;
 
     // Prompt string
-    if (NULL != settings->Prompt)
-        cli->Prompt = settings->Prompt;
+    if (NULL != init->Prompt)
+        cli->Prompt = init->Prompt;
     else
         cli->Prompt = BRICLI_DEFAULT_PROMPT;
 
     // RX Buffer settings
-    cli->RxBuffer = settings->RxBuffer;
-    cli->RxBufferSize = settings->RxBufferSize;
+    cli->RxBuffer = init->RxBuffer;
+    cli->RxBufferSize = init->RxBufferSize;
 
     // Command List settings
-    cli->CommandList = settings->CommandList;
+    cli->CommandList = init->CommandList;
 
     // BSP settings
-    cli->BspWrite = settings->BspWrite;
+    cli->BspWrite = init->BspWrite;
 
     // Event settings
-    cli->OnStateChanged = settings->OnStateChanged;
+    cli->OnStateChanged = init->OnStateChanged;
 
-    // Flag settings
-    cli->LocalEcho = settings->LocalEcho;
+    // Runtime settings
+    memcpy(&cli->Settings, &init->Settings, sizeof(BricliSettings_t));
 
     // Auth list
-    if (NULL != settings->AuthList)
-        cli->AuthList = settings->AuthList;
+    if (NULL != init->AuthList)
+        cli->AuthList = init->AuthList;
 
     // Success
     result = BricliOk;
@@ -598,7 +607,6 @@ cleanup:
     return result;
 }
 
-#if BRICLI_USE_COLOUR
 /**
  * @brief Sets the various colour options of a VT100 terminal.
  *
@@ -606,49 +614,12 @@ cleanup:
  */
 void Bricli_SetColour(BricliHandle_t *cli, BricliColours_t colourId)
 {
-    char *colourMessage = NULL;
-
-    // Reset the VT100 terminal colour settings.
-    if (colourId == BricliColourReset)
+    // If enabled, Send the colour string
+    if (NULL != cli && cli->Settings.EnableColour)
     {
-        colourMessage = (char *)_colourReset;
-    }
-#if BRICLI_USE_TEXT_COLOURS
-    // Text colours.
-    else if (colourId <= BricliTextWhite)
-    {
-        colourMessage = (char *)_colourTable[colourId];
-    }
-#endif // BRICLI_USE_TEXT_COLOURSs
-#if BRICLI_USE_BOLD
-    // Bold colours
-    else if (colourId <= BricliTextBoldWhite)
-    {
-        colourMessage = (char *)_boldTable[colourId - BricliTextWhite];
-    }
-#endif // BRICLI_USE_BOLD
-#if BRICLI_USE_UNDERLINE
-    // Underline colours.
-    else if (colourId <= BricliUnderlineWhite)
-    {
-        colourMessage = (char *)_underlineTable[colourId - BricliTextBoldWhite];
-    }
-#endif // BRICLI_USE_UNDERLINE
-#if BRICLI_USE_BACKGROUNDS
-    // Background colours.
-    else if (colourId <= BricliBackgroundWhite)
-    {
-        colourMessage = (char *)_backgroundTable[colourId - BricliUnderlineWhite];
-    }
-#endif // BRICLI_USE_BACKGROUNDS
-
-    // Send the colour message if we have one.
-    if (colourMessage != NULL)
-    {
-        Bricli_WriteString(cli, colourMessage);
+        Bricli_WriteString(cli, (char *)_colourTable[colourId]);
     }
 }
-#endif // BRICLI_USE_COLOUR
 
 int Bricli_ParseEscapeCode(BricliHandle_t *cli)
 {
@@ -815,8 +786,15 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 
     // Check if this is a system command.
     const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
-    while (systemCommand->Name != NULL)
+    while (systemCommand->ID != BricliSystemCommandNone)
     {
+        // Don't display system auth commands if we aren't using auth
+        if (!cli->Settings.EnableAuth && (systemCommand->ID == BricliSystemCommandLogin || systemCommand->ID == BricliSystemCommandLogout))
+        {
+            systemCommand++;
+            continue;
+        }
+        
         if (strcmp(command, systemCommand->Name) == 0)
         {
             // Call the command's handler function.
@@ -835,7 +813,6 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     BricliCommand_t *cliCommand = &cli->CommandList[0];
     while(cliCommand->Name != NULL)
     {
-
         // Check if we have found a match.
         if (strcmp(command, cliCommand->Name) == 0)
         {
@@ -853,16 +830,17 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
                 if (result < 0)
                 {
                     // If enabled, display the error code to the user.
-                #if BRICLI_SHOW_COMMAND_ERRORS
-                    if (cli->SendEol == NULL)
+                    if (cli->Settings.ShowHandlerErrors)
                     {
-                        BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+                        if (cli->SendEol == NULL)
+                        {
+                            BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+                        }
+                        else
+                        {
+                            BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
+                        }
                     }
-                    else
-                    {
-                        BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
-                    }
-                #endif // BRICLI_SHOW_COMMAND_ERRORS
 
                     cli->LastError = BricliErrorCommand;
                 }
@@ -900,9 +878,10 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     }
 
     // If enabled, print help on an unknown command.
-#if BRICLI_SHOW_HELP_ON_ERROR
-    Bricli_PrintHelp(cli);
-#endif // BRICLI_SHOW_HELP_ON_ERROR
+    if (cli->Settings.ShowHelpOnError)
+    {
+        Bricli_PrintHelp(cli);
+    }
 
     // Return that this is an unknown command.
     cli->LastError = BricliErrorInternal;
@@ -963,9 +942,7 @@ size_t Bricli_SplitOnEol(BricliHandle_t *cli)
 {
     uint16_t numberOfCommands = 0;
     char *token = NULL;
-    #if BRICLI_USE_REENTRANT
-        char *lastToken = NULL;
-    #endif // BRICLI_USE_REENTRANT
+    char *lastToken = NULL;
 
     // Make sure our parameters are valid.
     if (cli == NULL || cli->Eol == NULL || cli->RxBuffer == NULL || cli->PendingBytes == 0)
@@ -974,21 +951,13 @@ size_t Bricli_SplitOnEol(BricliHandle_t *cli)
     }
 
     // Iterate over the buffer looking for EOLs.
-    #if BRICLI_USE_REENTRANT
-        token = (char *)strtok_r(cli->RxBuffer, cli->Eol, &lastToken);
-    #else
-        token = (char *)strtok(cli->RxBuffer, cli->Eol);
-    #endif // BRICLI_USE_REENTRANT
+    token = (char *)strtok_r(cli->RxBuffer, cli->Eol, &lastToken);
 
     while (token != NULL)
     {
         // Increment the number of commands and get the next token.
         numberOfCommands++;
-        #if BRICLI_USE_REENTRANT
-            token = (char *)strtok_r(NULL, cli->Eol, &lastToken);
-        #else
-            token = (char *)strtok(NULL, cli->Eol);
-        #endif // BRICLI_USE_REENTRANT
+        token = (char *)strtok_r(NULL, cli->Eol, &lastToken);
     }
 
     // Edge case: If no delimiters were present the length of the buffer will match pending bytes exactly.
@@ -1049,7 +1018,7 @@ BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t *cli, char rxChar)
     }
 
     // Echo the received character.
-    if (cli->LocalEcho)
+    if (cli->Settings.EnableLocalEcho)
     {
         Bricli_Write(cli, 1, &rxChar);
     }

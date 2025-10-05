@@ -42,7 +42,7 @@ namespace Cli {
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
-            init.LocalEcho = true;
+            init.Settings.EnableLocalEcho = true;
 
 			Bricli_Init(&_cli, &init);
         }
@@ -186,7 +186,7 @@ namespace Cli {
         // Reset and turn off echo.
         Bricli_Reset(&_cli);
         RESET_FAKE(BspWrite);
-        _cli.LocalEcho = false;
+        _cli.Settings.EnableLocalEcho = false;
 
         // Ensure that echo wasn't called.
         Bricli_ReceiveArray(&_cli, testData.length(), (char *)testData.c_str());

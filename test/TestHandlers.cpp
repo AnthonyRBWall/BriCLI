@@ -4,11 +4,6 @@
 #include <FFF/fff.h>
 DEFINE_FFF_GLOBALS;
 
-// Ensure command errors are turned on.
-#define BRICLI_SHOW_COMMAND_ERRORS 1
-#define BRICLI_SHOW_HELP_ON_ERROR 1
-#define BRICLI_USE_REENTRANT 0
-
 #include <bricli/bricli.h>
 
 // Setup fake functions
@@ -84,6 +79,10 @@ namespace Cli {
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
             init.OnStateChanged = Test_StateChanged;
+			init.Settings.EnableAuth = true;
+			init.Settings.EnableColour = true;
+			init.Settings.ShowHandlerErrors = true;
+			init.Settings.ShowHelpOnError = true;
 
 			Bricli_Init(&_cli, &init);
 		}
