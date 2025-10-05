@@ -1,21 +1,9 @@
 #ifndef BRICLI_SETTINGS_H
 #define BRICLI_SETTINGS_H
 
-#ifndef BRICLI_SHOW_HELP_ON_ERROR
-#define BRICLI_SHOW_HELP_ON_ERROR 1 // Set to 1 to have BriCLI print the help message on an unkown command.
-#endif // BRICLI_SHOW_HELP_ON_ERROR
-
-#ifndef BRICLI_SHOW_COMMAND_ERRORS
-#define BRICLI_SHOW_COMMAND_ERRORS 1 // Set to 1 to have BriCLI automatically report command handler error codes.
-#endif // BRICLI_SHOW_COMMAND_ERRORS
-
 #ifndef BRICLI_USE_REENTRANT
 #define BRICLI_USE_REENTRANT 1 // Set to 1 to have BriCLI use re-entrant safe strtok_r instead of strtok.
 #endif // BRICLI_USE_REENTRANT
-
-#ifndef BRICLI_USE_COLOUR
-#define BRICLI_USE_COLOUR 1 // Set to 1 to allow the use of VT100 colour options.
-#endif // BRICLI_USE_COLOUR
 
 #ifndef BRICLI_MAX_COMMAND_LEN
 #define BRICLI_MAX_COMMAND_LEN 10 // Sets the maximum command name length.
@@ -37,12 +25,9 @@
 #define BRICLI_PRINT_MESSAGE_SIZE 80 // Sets the maximum length of a custom PrintF message.
 #endif // BRICLI_PRINT_MESSAGE_SIZE
 
-// VT100 colour options.
-#if BRICLI_USE_COLOUR
-#ifndef BRICLI_USE_TEXT_COLOURS
-#define BRICLI_USE_TEXT_COLOURS    1 // Enables the use of text colour options.
-#endif // BRICLI_USE_TEXT_COLOURS
-
+// VT100 colour options
+#if 0
+#warning "Colour flags are deprecated for removal in a future release"
 #ifndef BRICLI_USE_BOLD
 #define BRICLI_USE_BOLD            1 // Enables the use of bold text options.
 #endif // BRICLI_USE_BOLD
@@ -74,8 +59,19 @@
 #ifndef BRICLI_DEFAULT_PROMPT
 #define BRICLI_DEFAULT_PROMPT			">> " // The default prompt string to be used when non is provided to init
 #endif // BRICLI_DEFAULT_PROMPT
+#endif // 0
 
-#endif // BRICLI_USE_COLOUR
+/**
+ * @brief Runtime configurable settings
+ */
+typedef struct _BricliSettings_t
+{
+    uint8_t ShowHelpOnError : 1;    // Print the help message on receipt of an unkown command.
+    uint8_t ShowHandlerErrors : 1;  // Automatically report command handler error codes.
+    uint8_t EnableColour : 1;       // Allow the use of VT100 colour options.
+    uint8_t __reserved : 5;         // Reserved
+} BricliSettings_t;
+
 
 #ifdef __cplusplus
 extern "C" {
