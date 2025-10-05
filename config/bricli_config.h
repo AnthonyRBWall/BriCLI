@@ -40,16 +40,6 @@
 // The default prompt string to be used when non is provided to init
 #define BRICLI_DEFAULT_PROMPT			">> "
 
-// ============================
-// ===== Display Settings =====
-// ============================
-
-// When on, BriCLI will automatically report command handler errors to the user, default on
-#define BRICLI_SHOW_COMMAND_ERRORS 1
-
-// When on, BriCLI will automatically show the help message when an unknown command is received, default on
-#define BRICLI_SHOW_HELP_ON_ERROR 1
-
 // ==============================
 // ===== Logging Settings =======
 // ==============================
@@ -62,9 +52,6 @@
 // ===========================
 // ===== Colour Settings =====
 // ===========================
-
-// When on, enables the use of VT100 colour commands, default on
-#define BRICLI_USE_COLOUR 1
 
 // Enables the use of VT100 background colours, default on
 #define BRICLI_USE_BACKGROUNDS 1
