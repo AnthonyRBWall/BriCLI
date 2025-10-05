@@ -64,6 +64,7 @@ There are several compile time settings that can be applied to BriCLI via the `b
 In addition to compile time settings that modify fixed behaviours, runtime settings are stored in `cli.Settings` can be changed during the lifetime of a BriCLI instance:
 | Setting | Description |
 | --- | --- |
+| EnableAuth | Allow the use of authentication features |
 | EnableColour | Allow the use of VT100 colour options |
 | EnableLocalEcho | Echo received characters back to the caller |
 | ShowHandlerErrors | Automatically report command handler error codes |
