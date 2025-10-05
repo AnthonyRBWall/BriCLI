@@ -79,6 +79,7 @@ namespace Cli {
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
             init.OnStateChanged = Test_StateChanged;
+			init.Settings.EnableAuth = true;
 			init.Settings.EnableColour = true;
 			init.Settings.ShowHandlerErrors = true;
 			init.Settings.ShowHelpOnError = true;

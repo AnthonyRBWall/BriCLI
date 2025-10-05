@@ -255,7 +255,7 @@ static bool Bricli_IsCommandInScope(BricliHandle_t* cli, BricliCommand_t *comman
         // Command is available to all scopes
         return true;
     }
-    else if ((cli->AuthScopes & command->AuthScopesRequired) != 0)
+    else if (cli->Settings.EnableAuth && ((cli->AuthScopes & command->AuthScopesRequired) != 0) )
     {
         // Command is available under granted scopes
         return true;
@@ -280,13 +280,26 @@ static bool Bricli_IsCommandInScope(BricliHandle_t* cli, BricliCommand_t *comman
 typedef int (*Bricli_SystemCommandHandler)(BricliHandle_t *cli, uint32_t numberOfArgs, char* args[]);
 
 /**
+ * @brief Internal IDs for tracking system commands
+ */
+typedef enum _BricliSystemCommandId_t
+{
+    BricliSystemCommandNone,
+    BricliSystemCommandHelp,
+    BricliSystemCommandClear,
+    BricliSystemCommandLogin,
+    BricliSystemCommandLogout
+} BricliSystemCommandId_t;
+
+/**
  * @brief Internal command handler
  */
 typedef struct _BricliSystemCommand_t
 {
-    const char*             Name;                   /*<< Command name. */
-    Bricli_SystemCommandHandler   Handler;                /*<< Handler function for this command. */
-    const char*             HelpMessage;            /*<< Optional message to be displayed by the help command. */
+    BricliSystemCommandId_t         ID;             /*<< Command ID */
+    const char*                     Name;           /*<< Command name. */
+    Bricli_SystemCommandHandler     Handler;        /*<< Handler function for this command. */
+    const char*                     HelpMessage;    /*<< Optional message to be displayed by the help command. */
 } BricliSystemCommand_t;
 
 static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, char *args[]);
@@ -299,11 +312,11 @@ static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs
  */
 static const BricliSystemCommand_t _systemCommands[] =
 {
-    {"help", Bricli_SystemHandlerHelp, "Displays this help message"},
-    {"clear", Bricli_SystemHandlerClear, "Clears the terminal"},
-    {"login", Bricli_SystemHandlerLogin, "Login to the terminal"},
-    {"logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
-    {NULL, NULL, NULL}
+    {BricliSystemCommandHelp, "help", Bricli_SystemHandlerHelp, "Displays this help message"},
+    {BricliSystemCommandClear, "clear", Bricli_SystemHandlerClear, "Clears the terminal"},
+    {BricliSystemCommandLogin, "login", Bricli_SystemHandlerLogin, "Login to the terminal"},
+    {BricliSystemCommandLogout, "logout", Bricli_SystemHandlerLogout, "Logout from the terminal"},
+    {BricliSystemCommandNone, NULL, NULL, NULL}
 };
 
 /**
@@ -322,8 +335,15 @@ static int Bricli_SystemHandlerHelp(BricliHandle_t *cli, uint32_t numberOfArgs, 
 
     // Print the system commands first.
     const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
-    while(systemCommand->Name != NULL)
+    while(systemCommand->ID != BricliSystemCommandNone)
     {
+        // Don't display system auth commands if we aren't using auth
+        if (!cli->Settings.EnableAuth && (systemCommand->ID == BricliSystemCommandLogin || systemCommand->ID == BricliSystemCommandLogout))
+        {
+            systemCommand++;
+            continue;
+        }
+        
         if (cli->SendEol == NULL)
         {
             Bricli_PrintF(cli, "%s - %s%s", systemCommand->Name, systemCommand->HelpMessage, cli->Eol);
@@ -766,8 +786,15 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 
     // Check if this is a system command.
     const BricliSystemCommand_t *systemCommand = &_systemCommands[0];
-    while (systemCommand->Name != NULL)
+    while (systemCommand->ID != BricliSystemCommandNone)
     {
+        // Don't display system auth commands if we aren't using auth
+        if (!cli->Settings.EnableAuth && (systemCommand->ID == BricliSystemCommandLogin || systemCommand->ID == BricliSystemCommandLogout))
+        {
+            systemCommand++;
+            continue;
+        }
+        
         if (strcmp(command, systemCommand->Name) == 0)
         {
             // Call the command's handler function.
@@ -786,7 +813,6 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     BricliCommand_t *cliCommand = &cli->CommandList[0];
     while(cliCommand->Name != NULL)
     {
-
         // Check if we have found a match.
         if (strcmp(command, cliCommand->Name) == 0)
         {

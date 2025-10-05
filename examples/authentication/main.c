@@ -79,6 +79,7 @@ int main(int argc, char const *argv[])
     init.CommandList = _commandList;
 
     // Configure runtime settings
+    init.Settings.EnableAuth = true;
     init.Settings.EnableColour = true;
     init.Settings.EnableLocalEcho = true;
     init.Settings.ShowHelpOnError = true;
