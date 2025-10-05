@@ -1,10 +1,6 @@
 #ifndef BRICLI_SETTINGS_H
 #define BRICLI_SETTINGS_H
 
-#ifndef BRICLI_USE_REENTRANT
-#define BRICLI_USE_REENTRANT 1 // Set to 1 to have BriCLI use re-entrant safe strtok_r instead of strtok.
-#endif // BRICLI_USE_REENTRANT
-
 #ifndef BRICLI_MAX_COMMAND_LEN
 #define BRICLI_MAX_COMMAND_LEN 10 // Sets the maximum command name length.
 #endif // BRICLI_MAX_COMMAND_LEN

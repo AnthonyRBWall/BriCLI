@@ -974,9 +974,7 @@ size_t Bricli_SplitOnEol(BricliHandle_t *cli)
 {
     uint16_t numberOfCommands = 0;
     char *token = NULL;
-    #if BRICLI_USE_REENTRANT
-        char *lastToken = NULL;
-    #endif // BRICLI_USE_REENTRANT
+    char *lastToken = NULL;
 
     // Make sure our parameters are valid.
     if (cli == NULL || cli->Eol == NULL || cli->RxBuffer == NULL || cli->PendingBytes == 0)
@@ -985,21 +983,13 @@ size_t Bricli_SplitOnEol(BricliHandle_t *cli)
     }
 
     // Iterate over the buffer looking for EOLs.
-    #if BRICLI_USE_REENTRANT
-        token = (char *)strtok_r(cli->RxBuffer, cli->Eol, &lastToken);
-    #else
-        token = (char *)strtok(cli->RxBuffer, cli->Eol);
-    #endif // BRICLI_USE_REENTRANT
+    token = (char *)strtok_r(cli->RxBuffer, cli->Eol, &lastToken);
 
     while (token != NULL)
     {
         // Increment the number of commands and get the next token.
         numberOfCommands++;
-        #if BRICLI_USE_REENTRANT
-            token = (char *)strtok_r(NULL, cli->Eol, &lastToken);
-        #else
-            token = (char *)strtok(NULL, cli->Eol);
-        #endif // BRICLI_USE_REENTRANT
+        token = (char *)strtok_r(NULL, cli->Eol, &lastToken);
     }
 
     // Edge case: If no delimiters were present the length of the buffer will match pending bytes exactly.

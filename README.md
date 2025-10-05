@@ -52,7 +52,6 @@ There are several settings that can be applied to BriCLI via the `bricli_config.
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| **BRICLI_USE_REENTRANT** | Off | When on, BriCLI will use the thread safe `strtok_r` in place of `strtok` |
 | **BRICLI_MAX_COMMAND_LEN** | 10 | The maximum length any user command can be |
 | **BRICLI_ARGUMENT_BUFFER_LEN** | 70 | The length of the internal arguments buffer |
 | **BRICLI_MAX_ARGUMENTS** | 3 | The maximum number of arguments BriCLI can parse |

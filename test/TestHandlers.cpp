@@ -4,9 +4,6 @@
 #include <FFF/fff.h>
 DEFINE_FFF_GLOBALS;
 
-// Ensure command errors are turned on.
-#define BRICLI_USE_REENTRANT 0
-
 #include <bricli/bricli.h>
 
 // Setup fake functions
