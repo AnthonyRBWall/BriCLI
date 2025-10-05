@@ -12,48 +12,6 @@
 
 #include "handle.h"
 
-//Regular text
-#define BRICLI_TEXT_BLACK      "\e[0;30m"
-#define BRICLI_TEXT_RED        "\e[0;31m"
-#define BRICLI_TEXT_GREEN      "\e[0;32m"
-#define BRICLI_TEXT_YELLOW     "\e[0;33m"
-#define BRICLI_TEXT_BLUE       "\e[0;34m"
-#define BRICLI_TEXT_MAGENTA    "\e[0;35m"
-#define BRICLI_TEXT_CYAN       "\e[0;36m"
-#define BRICLI_TEXT_WHITE      "\e[0;37m"
-
-//Regular bold text
-#define BRICLI_BOLD_BLACK      "\e[1;30m"
-#define BRICLI_BOLD_RED        "\e[1;31m"
-#define BRICLI_BOLD_GREEN      "\e[1;32m"
-#define BRICLI_BOLD_YELLOW     "\e[1;33m"
-#define BRICLI_BOLD_BLUE       "\e[1;34m"
-#define BRICLI_BOLD_MAGENTA    "\e[1;35m"
-#define BRICLI_BOLD_CYAN       "\e[1;36m"
-#define BRICLI_BOLD_WHITE      "\e[1;37m"
-
-//Regular underline text
-#define BRICLI_UL_BLACK        "\e[4;30m"
-#define BRICLI_UL_RED          "\e[4;31m"
-#define BRICLI_UL_GREEN        "\e[4;32m"
-#define BRICLI_UL_YELLOW       "\e[4;33m"
-#define BRICLI_UL_BLUE         "\e[4;34m"
-#define BRICLI_UL_MAGENTA      "\e[4;35m"
-#define BRICLI_UL_CYAN         "\e[4;36m"
-#define BRICLI_UL_WHITE        "\e[4;37m"
-
-//Regular background
-#define BRICLI_BKGND_BLACK     "\e[40m"
-#define BRICLI_BKGND_RED       "\e[41m"
-#define BRICLI_BKGND_GREEN     "\e[42m"
-#define BRICLI_BKGND_YELLOW    "\e[43m"
-#define BRICLI_BKGND_BLUE      "\e[44m"
-#define BRICLI_BKGND_MAGENTA   "\e[45m"
-#define BRICLI_BKGND_CYAN      "\e[46m"
-#define BRICLI_BKGND_WHITE     "\e[47m"
-
-#define BRICLI_COLOUR_RESET    "\e[0m"
-
 // //High intensity background
 // #define BRICLI_INTENSE_BKGND_BLKHB "\e[0;100m"
 // #define REDHB "\e[0;101m"
@@ -89,6 +47,8 @@
  */
 typedef enum _BricliColours_t
 {
+    BricliColourReset,
+
     BricliTextBlack,
     BricliTextRed,
     BricliTextGreen,
@@ -125,7 +85,7 @@ typedef enum _BricliColours_t
     BricliBackgroundCyan,
     BricliBackgroundWhite,
 
-    BricliColourReset
+    BricliColourCount
 } BricliColours_t;
 
 #ifdef __cplusplus

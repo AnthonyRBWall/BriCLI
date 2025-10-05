@@ -27,63 +27,47 @@
 // ===== Constants =====
 // =====================
 
-static const char *_colourReset = "\e[0m";
-
-#if BRICLI_USE_TEXT_COLOURS
-static const char *_colourTable[] =
+// Contains VT100 colour codes
+static const char *_colourTable[BricliColourCount] =
 {
-    "\e[0;30m", // Black
-    "\e[0;31m", // Red
-    "\e[0;32m", // Green
-    "\e[0;33m", // Yellow
-    "\e[0;34m", // Blue
-    "\e[0;35m", // Magenta
-    "\e[0;36m", // Cyan
-    "\e[0;37m"  // White
-};
-#endif // BRICLI_USE_TEXT_COLOURS
+    "\e[0m",    // Control - Reset
 
-#if BRICLI_USE_BOLD
-static const char *_boldTable[] =
-{
-    "\e[1;30m", // Bold Black
-    "\e[1;31m", // Bold Red
-    "\e[1;32m", // Bold Green
-    "\e[1;33m", // Bold Yellow
-    "\e[1;34m", // Bold Blue
-    "\e[1;35m", // Bold Magenta
-    "\e[1;36m", // Bold Cyan
-    "\e[1;37m"  // Bold White
-};
-#endif // BRICLI_USE_BOLD
+    "\e[0;30m", // Text - Black
+    "\e[0;31m", // Text - Red
+    "\e[0;32m", // Text - Green
+    "\e[0;33m", // Text - Yellow
+    "\e[0;34m", // Text - Blue
+    "\e[0;35m", // Text - Magenta
+    "\e[0;36m", // Text - Cyan
+    "\e[0;37m", // Text - White
 
-#if BRICLI_USE_UNDERLINE
-static const char *_underlineTable[] =
-{
-    "\e[4;30m", // Underline Black
-    "\e[4;31m", // Underline Red
-    "\e[4;32m", // Underline Green
-    "\e[4;33m", // Underline Yellow
-    "\e[4;34m", // Underline Blue
-    "\e[4;35m", // Underline Magenta
-    "\e[4;36m", // Underline Cyan
-    "\e[4;37m"  // Underline White
-};
-#endif // BRICLI_USE_UNDERLINE
+    "\e[1;30m", // Bold - Black
+    "\e[1;31m", // Bold - Red
+    "\e[1;32m", // Bold - Green
+    "\e[1;33m", // Bold - Yellow
+    "\e[1;34m", // Bold - Blue
+    "\e[1;35m", // Bold - Magenta
+    "\e[1;36m", // Bold - Cyan
+    "\e[1;37m", // Bold - White
 
-#if BRICLI_USE_BACKGROUNDS
-static const char *_backgroundTable[] =
-{
-    "\e[40m", // Black Background
-    "\e[41m", // Red Background
-    "\e[42m", // Green Background
-    "\e[43m", // Yellow Background
-    "\e[44m", // Blue Background
-    "\e[45m", // Magenta Background
-    "\e[46m", // Cyan Background
-    "\e[47m"  // White Background
+    "\e[4;30m", // Underline - Black
+    "\e[4;31m", // Underline - Red
+    "\e[4;32m", // Underline - Green
+    "\e[4;33m", // Underline - Yellow
+    "\e[4;34m", // Underline - Blue
+    "\e[4;35m", // Underline - Magenta
+    "\e[4;36m", // Underline - Cyan
+    "\e[4;37m", // Underline - White
+
+    "\e[40m", // Background - Black
+    "\e[41m", // Background - Red
+    "\e[42m", // Background - Green
+    "\e[43m", // Background - Yellow
+    "\e[44m", // Background - Blue
+    "\e[45m", // Background - Magenta
+    "\e[46m", // Background - Cyan
+    "\e[47m"  // Background - White
 };
-#endif // BRICLI_USE_BACKGROUNDS
 
 // ===========================
 // ===== Local Functions =====
@@ -610,52 +594,10 @@ cleanup:
  */
 void Bricli_SetColour(BricliHandle_t *cli, BricliColours_t colourId)
 {
-    char *colourMessage = NULL;
-
-    // Validate parameters
-    if (NULL == cli || !cli->Settings.EnableColour)
+    // If enabled, Send the colour string
+    if (NULL != cli && cli->Settings.EnableColour)
     {
-        return;
-    }
-
-    // Reset the VT100 terminal colour settings.
-    if (colourId == BricliColourReset)
-    {
-        colourMessage = (char *)_colourReset;
-    }
-#if BRICLI_USE_TEXT_COLOURS
-    // Text colours.
-    else if (colourId <= BricliTextWhite)
-    {
-        colourMessage = (char *)_colourTable[colourId];
-    }
-#endif // BRICLI_USE_TEXT_COLOURSs
-#if BRICLI_USE_BOLD
-    // Bold colours
-    else if (colourId <= BricliTextBoldWhite)
-    {
-        colourMessage = (char *)_boldTable[colourId - BricliTextWhite];
-    }
-#endif // BRICLI_USE_BOLD
-#if BRICLI_USE_UNDERLINE
-    // Underline colours.
-    else if (colourId <= BricliUnderlineWhite)
-    {
-        colourMessage = (char *)_underlineTable[colourId - BricliTextBoldWhite];
-    }
-#endif // BRICLI_USE_UNDERLINE
-#if BRICLI_USE_BACKGROUNDS
-    // Background colours.
-    else if (colourId <= BricliBackgroundWhite)
-    {
-        colourMessage = (char *)_backgroundTable[colourId - BricliUnderlineWhite];
-    }
-#endif // BRICLI_USE_BACKGROUNDS
-
-    // Send the colour message if we have one.
-    if (colourMessage != NULL)
-    {
-        Bricli_WriteString(cli, colourMessage);
+        Bricli_WriteString(cli, (char *)_colourTable[colourId]);
     }
 }
 
