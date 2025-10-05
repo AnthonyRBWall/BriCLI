@@ -79,7 +79,7 @@ typedef struct BricliInit_t
     uint32_t RxBufferSize;
     BricliCommand_t* CommandList;
     Bricli_StateChanged OnStateChanged;
-    bool LocalEcho;
+    BricliSettings_t Settings;
 } BricliInit_t;
 
 /**
@@ -99,7 +99,6 @@ typedef struct _BricliHandle_t
     char*                   Eol;
     bool                    IsHandlingEscape;
     BricliLastError_t      	LastError;
-    bool                    LocalEcho;
     uint32_t                PendingBytes;
     char*                   Prompt;
     char*                   RxBuffer;
@@ -114,7 +113,7 @@ typedef struct _BricliHandle_t
 extern "C" {
 #endif // __cplusplus
 
-extern BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t *settings);
+extern BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t *init);
 extern void Bricli_ClearCommand(BricliHandle_t *cli);
 
 #ifdef __cplusplus

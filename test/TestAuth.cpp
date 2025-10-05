@@ -80,7 +80,7 @@ namespace Cli {
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
-            init.LocalEcho = true;
+            init.Settings.EnableLocalEcho = true;
 
 			Bricli_Init(&_cli, &init);
 		}

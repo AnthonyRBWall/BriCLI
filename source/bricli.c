@@ -520,12 +520,19 @@ static int Bricli_SystemHandlerLogout(BricliHandle_t *cli, uint32_t numberOfArgs
 // ===== Exported Functions =====
 // ==============================
 
-BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
+/**
+ * @brief Initialises a BriCLI instance using the given settings list
+ * 
+ * @param cli Pointer to a BriCLI instance to initialise
+ * @param init Pointer to a settings list to use for instance customization
+ * @return BricliErrors_t 
+ */
+BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* init)
 {
     BricliErrors_t result = BricliUnknown;
 
     // Validate pointers
-    if (NULL == cli || NULL == settings)
+    if (NULL == cli || NULL == init)
     {
         BRICLI_LOG("BriCLI: NULL pointer in %s\n", __func__);
         result = BricliBadParameter;
@@ -533,7 +540,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     }
 
     // Validate buffer settings
-    if (NULL == settings->RxBuffer || 0 == settings->RxBufferSize)
+    if (NULL == init->RxBuffer || 0 == init->RxBufferSize)
     {
         BRICLI_LOG("BriCLI: Invalid RX buffer in %s\n", __func__);
         result = BricliBadParameter;
@@ -541,7 +548,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     }
 
     // Validate command list settings
-    if (NULL == settings->CommandList || NULL == settings->CommandList[0].Name)
+    if (NULL == init->CommandList || NULL == init->CommandList[0].Name)
     {
         BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
         result = BricliBadParameter;
@@ -549,7 +556,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     }
 
     // Validate BSP Write function
-    if (NULL == settings->BspWrite)
+    if (NULL == init->BspWrite)
     {
         BRICLI_LOG("BriCLI: Invalid BspWrite in %s\n", __func__);
         result = BricliBadParameter;
@@ -560,36 +567,36 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* settings)
     memset(cli, 0, sizeof(BricliHandle_t));
 
     // EOL string
-    if (NULL != settings->Eol)
-        cli->Eol = settings->Eol;
+    if (NULL != init->Eol)
+        cli->Eol = init->Eol;
     else
         cli->Eol = BRICLI_DEFAULT_EOL;
 
     // Prompt string
-    if (NULL != settings->Prompt)
-        cli->Prompt = settings->Prompt;
+    if (NULL != init->Prompt)
+        cli->Prompt = init->Prompt;
     else
         cli->Prompt = BRICLI_DEFAULT_PROMPT;
 
     // RX Buffer settings
-    cli->RxBuffer = settings->RxBuffer;
-    cli->RxBufferSize = settings->RxBufferSize;
+    cli->RxBuffer = init->RxBuffer;
+    cli->RxBufferSize = init->RxBufferSize;
 
     // Command List settings
-    cli->CommandList = settings->CommandList;
+    cli->CommandList = init->CommandList;
 
     // BSP settings
-    cli->BspWrite = settings->BspWrite;
+    cli->BspWrite = init->BspWrite;
 
     // Event settings
-    cli->OnStateChanged = settings->OnStateChanged;
+    cli->OnStateChanged = init->OnStateChanged;
 
     // Flag settings
-    cli->LocalEcho = settings->LocalEcho;
+    cli->Settings.EnableLocalEcho = init->Settings.EnableLocalEcho;
 
     // Auth list
-    if (NULL != settings->AuthList)
-        cli->AuthList = settings->AuthList;
+    if (NULL != init->AuthList)
+        cli->AuthList = init->AuthList;
 
     // Success
     result = BricliOk;
@@ -607,6 +614,12 @@ cleanup:
 void Bricli_SetColour(BricliHandle_t *cli, BricliColours_t colourId)
 {
     char *colourMessage = NULL;
+
+    // Validate parameters
+    if (NULL == cli || !cli->Settings.EnableColour)
+    {
+        return;
+    }
 
     // Reset the VT100 terminal colour settings.
     if (colourId == BricliColourReset)
@@ -1049,7 +1062,7 @@ BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t *cli, char rxChar)
     }
 
     // Echo the received character.
-    if (cli->LocalEcho)
+    if (cli->Settings.EnableLocalEcho)
     {
         Bricli_Write(cli, 1, &rxChar);
     }

@@ -100,7 +100,7 @@ int main(void)
     cliInit.CommandList = _commandList;
     cliInit.RxBuffer = _rxBuffer;
     cliInit.RxBufferSize = RX_BUFFER_SIZE;
-    cliInit.LocalEcho = true;
+    cliInit.Settings.EnableLocalEcho = true;
 
 	Bricli_Init(&cli, &cliInit);
     
@@ -131,7 +131,7 @@ void SomeTask()
             } while (msgFound);
         }
 
-        // As of v2.2.0 this is only needed when cli.LocalEcho is false
+        // As of v2.2.0 this is only needed when cli.Settings.EnableLocalEcho is false
         // Echo the character back to the terminal.
         // Bricli_Write(&cli, 1, &rxChar);
 
