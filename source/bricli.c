@@ -200,7 +200,7 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
                 {
                     // printf("[DEBUG] Replaced escaped character with %c\n", *(cursor+1));
                     strcpy(cursor, (cursor + 1));
-                    // cursor++;
+                    cursor++;
                     argumentsEnd--;
 
                     if (NULL != argEnd)
