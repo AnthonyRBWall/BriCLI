@@ -21,41 +21,13 @@
 #define BRICLI_PRINT_MESSAGE_SIZE 80 // Sets the maximum length of a custom PrintF message.
 #endif // BRICLI_PRINT_MESSAGE_SIZE
 
-// VT100 colour options
-#if 0
-#warning "Colour flags are deprecated for removal in a future release"
-#ifndef BRICLI_USE_BOLD
-#define BRICLI_USE_BOLD            1 // Enables the use of bold text options.
-#endif // BRICLI_USE_BOLD
-
-#ifndef BRICLI_USE_UNDERLINE
-#define BRICLI_USE_UNDERLINE       1 // Enables the use of underline text options.
-#endif // BRICLI_USE_UNDERLINE
-
-#ifndef BRICLI_USE_BACKGROUNDS
-#define BRICLI_USE_BACKGROUNDS     1 // Enables the use of background colour options.
-#endif // BRICLI_USE_BACKGROUNDS
-
-#ifndef BRICLI_USE_INTENSE_BACKGROUNDS
-// #define BRICLI_USE_INTENSE_BACKGROUNDS 1 // Enables the use of high intensity background colour options.
-#endif // BRICLI_USE_INTENSE_BACKGROUNDS
-
-#ifndef BRICLI_USE_INTENSE_TEXT
-// #define BRICLI_USE_INTENSE_TEXT     1 // Enables the use of high intensity text colour options.
-#endif // BRICLI_USE_INTENSE_TEXT
-
-#ifndef BRICLI_USE_INTENSE_BOLD
-// #define BRICLI_USE_INTENSE_BOLD     1 // Enables the use of high intensity bold text options.
-#endif // BRICLI_USE_INTENSE_BOLD
-
 #ifndef BRICLI_DEFAULT_EOL
 #define BRICLI_DEFAULT_EOL				"\n" // The default EoL string to be used when none is provided to init
 #endif // BRICLI_DEFAULT_EOL
 
 #ifndef BRICLI_DEFAULT_PROMPT
-#define BRICLI_DEFAULT_PROMPT			">> " // The default prompt string to be used when non is provided to init
+#define BRICLI_DEFAULT_PROMPT			">> " // The default prompt string to be used when none is provided to init
 #endif // BRICLI_DEFAULT_PROMPT
-#endif // 0
 
 /**
  * @brief Runtime configurable settings
