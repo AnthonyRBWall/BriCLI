@@ -589,8 +589,8 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* init)
     // Event settings
     cli->OnStateChanged = init->OnStateChanged;
 
-    // Flag settings
-    cli->Settings.EnableLocalEcho = init->Settings.EnableLocalEcho;
+    // Runtime settings
+    memcpy(&cli->Settings, &init->Settings, sizeof(BricliSettings_t));
 
     // Auth list
     if (NULL != init->AuthList)
