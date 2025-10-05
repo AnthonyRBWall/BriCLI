@@ -34,10 +34,10 @@
  */
 typedef struct _BricliSettings_t
 {
-    uint8_t EnableColour : 1;       // Allow the use of VT100 colour options.
+    uint8_t EnableColour : 1;       // Allow the use of VT100 colour options
     uint8_t EnableLocalEcho : 1;    // Echo received characters back to the caller
-    uint8_t ShowHandlerErrors : 1;  // Automatically report command handler error codes.
-    uint8_t ShowHelpOnError : 1;    // Print the help message on receipt of an unkown command.
+    uint8_t ShowHandlerErrors : 1;  // Automatically report command handler error codes
+    uint8_t ShowHelpOnError : 1;    // Print the help message on receipt of an unkown command
     uint8_t __reserved : 4;         // Reserved
 } BricliSettings_t;
 
