@@ -5,25 +5,27 @@ BriCLI (pronounced Bric-lee) is an easy-to-use C Command Line Interface library
 
 ## Contents 
 - [BriCLI](#bricli)
-	- [Contents](#contents)
-	- [A Note About Escape Codes](#a-note-about-escape-codes)
-	- [Install Guide](#install-guide)
-	- [Configuration](#configuration)
-	- [Examples](#examples)
-	- [Porting Guide](#porting-guide)
-	- [User Guide](#user-guide)
-		- [Adding BriCLI to your project](#adding-bricli-to-your-project)
-		- [Initialisation](#initialisation)
-		- [Basic Command Loop](#basic-command-loop)
-		- [Different Send and Receive EoLs](#different-send-and-receive-eols)
-			- [Normal operation with just Eol](#normal-operation-with-just-eol)
-			- [Seperate operation with Eol and SendEol](#seperate-operation-with-eol-and-sendeol)
-		- [Custom Parsing](#custom-parsing)
-		- [State Change Events](#state-change-events)
-		- [Command Handlers](#command-handlers)
-		- [Command List](#command-list)
-		- [Built-In Commands](#built-in-commands)
-		- [Authentication](#authentication)
+  - [Contents](#contents)
+  - [A Note About Escape Codes](#a-note-about-escape-codes)
+  - [Install Guide](#install-guide)
+  - [Configuration](#configuration)
+  - [Compile-time](#compile-time)
+  - [Runtime](#runtime)
+  - [Examples](#examples)
+  - [Porting Guide](#porting-guide)
+  - [User Guide](#user-guide)
+    - [Adding BriCLI to your project](#adding-bricli-to-your-project)
+    - [Initialisation](#initialisation)
+    - [Basic Command Loop](#basic-command-loop)
+    - [Different Send and Receive EoLs](#different-send-and-receive-eols)
+      - [Normal operation with just Eol](#normal-operation-with-just-eol)
+      - [Seperate operation with Eol and SendEol](#seperate-operation-with-eol-and-sendeol)
+    - [Custom Parsing](#custom-parsing)
+    - [State Change Events](#state-change-events)
+    - [Command Handlers](#command-handlers)
+    - [Command List](#command-list)
+    - [Built-In Commands](#built-in-commands)
+    - [Authentication](#authentication)
 
 
 ## A Note About Escape Codes
@@ -48,7 +50,8 @@ git clone --depth 1 --branch "v1.0.0" git@github.com:AnthonyRBWall/BriCLI.git
 ```
 
 ## Configuration
-There are several settings that can be applied to BriCLI via the `bricli_config.h` file, they are listed below:
+## Compile-time
+There are several compile time settings that can be applied to BriCLI via the `bricli_config.h` file, they are listed below:
 
 | Setting | Default | Description |
 | --- | --- | --- |
@@ -56,10 +59,15 @@ There are several settings that can be applied to BriCLI via the `bricli_config.
 | **BRICLI_ARGUMENT_BUFFER_LEN** | 70 | The length of the internal arguments buffer |
 | **BRICLI_MAX_ARGUMENTS** | 3 | The maximum number of arguments BriCLI can parse |
 | **BRICLI_PRINT_MESSAGE_SIZE** | 80 | The maximum length a PrintF message can be |
-| **BRICLI_USE_TEXT_COLOURS** | On | Enables the use of VT100 text colours |
-| **BRICLI_USE_BOLD** | On | Enables the use of VT100 bold text colours |
-| **BRICLI_USE_UNDERLINE** | On | Enables the use of VT100 underline colours |
-| **BRICLI_USE_BACKGROUNDS** | On | Enables the use of VT100 background colours |
+
+## Runtime
+In addition to compile time settings that modify fixed behaviours, runtime settings are stored in `cli.Settings` can be changed during the lifetime of a BriCLI instance:
+| Setting | Description |
+| --- | --- |
+| EnableColour | Allow the use of VT100 colour options |
+| EnableLocalEcho | Echo received characters back to the caller |
+| ShowHandlerErrors | Automatically report command handler error codes |
+| ShowHelpOnError | Print the help message on receipt of an unkown command |
 
 ## Examples
 An example application for using BriCLI on various platforms can be found under the Examples directory. Currently the following examples are supported:
