@@ -27,7 +27,6 @@
 // ===== Constants =====
 // =====================
 
-#if BRICLI_USE_COLOUR
 static const char *_colourReset = "\e[0m";
 
 #if BRICLI_USE_TEXT_COLOURS
@@ -85,7 +84,6 @@ static const char *_backgroundTable[] =
     "\e[47m"  // White Background
 };
 #endif // BRICLI_USE_BACKGROUNDS
-#endif // BRICLI_USE_COLOUR
 
 // ===========================
 // ===== Local Functions =====
@@ -605,7 +603,6 @@ cleanup:
     return result;
 }
 
-#if BRICLI_USE_COLOUR
 /**
  * @brief Sets the various colour options of a VT100 terminal.
  *
@@ -661,7 +658,6 @@ void Bricli_SetColour(BricliHandle_t *cli, BricliColours_t colourId)
         Bricli_WriteString(cli, colourMessage);
     }
 }
-#endif // BRICLI_USE_COLOUR
 
 int Bricli_ParseEscapeCode(BricliHandle_t *cli)
 {
