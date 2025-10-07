@@ -20,14 +20,14 @@
 
 #include "bricli_config.h"
 
-#include "auth.h"
-#include "colours.h"
-#include "error.h"
-#include "escape_codes.h"
-#include "handle.h"
-#include "parser.h"
-#include "settings.h"
-#include "writer.h"
-#include "util.h"
+#include <bricli/auth.h>
+#include <bricli/colours.h>
+#include <bricli/error.h>
+#include <bricli/escape_codes.h>
+#include <bricli/handle.h>
+#include <bricli/parser.h>
+#include <bricli/settings.h>
+#include <bricli/writer.h>
+#include <bricli/util.h>
 
 #endif /* __BRICLI_H__ */

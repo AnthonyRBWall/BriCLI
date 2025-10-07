@@ -3,8 +3,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "error.h"
-#include "settings.h"
+#include <bricli/error.h>
+#include <bricli/settings.h>
+#include <bricli/auth.h>
 
 /**
  * @brief States that BriCLI can be in during execution.

@@ -1,8 +1,8 @@
 #ifndef BRICLI_WRITER_H
 #define BRICLI_WRITER_H
 
-#include "colours.h"
-#include "escape_codes.h"
+#include <bricli/colours.h>
+#include <bricli/escape_codes.h>
 
 #ifdef __cplusplus
 extern "C" {

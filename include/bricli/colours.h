@@ -10,7 +10,7 @@
 #ifndef BRICLI_COLOURS_H
 #define BRICLI_COLOURS_H
 
-#include "handle.h"
+#include <bricli/handle.h>
 
 // //High intensity background
 // #define BRICLI_INTENSE_BKGND_BLKHB "\e[0;100m"
