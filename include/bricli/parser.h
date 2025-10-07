@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "handle.h"
-#include "error.h"
+#include <bricli/handle.h>
+#include <bricli/error.h>
 
 #ifdef __cplusplus
 extern "C" {
