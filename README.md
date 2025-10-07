@@ -81,7 +81,21 @@ The only port functionality required by BriCLI is the BspWrite function, this mu
 
 ## User Guide
 ### Adding BriCLI to your project
-BriCLI is contained entirely in a single source and header pair, simply copy these files into your application and use `#include <bricli/bricli.h>` anywhere you want to call the BriCLI API.
+BriCLI is typically distributed as a static library alongside a set of public headers, to enable BriCLi in your application:
+- Compile for your target system
+- Link BriCLI in your application (`-lbricli`)
+- Add the include path (`-Ibricli/include`) 
+- Add `#include <bricli/bricli.h>` to any sources where you want to call the BriCLI API.
+
+If linking BriCLI from source, use CMake to connect:
+
+```cmake
+# Build BriCLI
+add_subdirectory(bricli)
+
+# Link with the application
+target_link_libraries(my-app PUBLIC bricli)
+```
 
 ### Initialisation
 The basic pre-requisites for using BriCLI are the command list, the CLI settings, the BspWrite function and the RX buffer.
