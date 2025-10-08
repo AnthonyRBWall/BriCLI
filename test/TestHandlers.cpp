@@ -262,7 +262,6 @@ namespace Cli {
         BricliErrors_t error = BricliUnknown;
 
         // Receive the command.
-        printf("Test 1\n");
 		error = Bricli_ReceiveArray(&_cli, twoCommands.length(), (char *)twoCommands.c_str());
         EXPECT_EQ(error, BricliOk);
 
@@ -271,10 +270,8 @@ namespace Cli {
         EXPECT_EQ(Test_Handler_fake.call_count, 2);
         EXPECT_EQ(_cli.PendingBytes, 0);
         EXPECT_EQ(error, BricliOk);
-		printf("DONE\n");
 
         // Receive the triple command
-		printf("Test 2\n");
         error = Bricli_ReceiveArray(&_cli, threeCommands.length(), (char *)threeCommands.c_str());
         EXPECT_EQ(error, BricliOk);
 
@@ -283,10 +280,8 @@ namespace Cli {
         EXPECT_EQ(Argument_Handler_fake.call_count, 1);
         EXPECT_EQ(_cli.PendingBytes, 0);
         EXPECT_EQ(error, BricliOk);
-		printf("DONE\n");
 
         // Receive the dual arguments command
-		printf("Test 3\n");
         error = Bricli_ReceiveArray(&_cli, twoArgsCommands.length(), (char *)twoArgsCommands.c_str());
         EXPECT_EQ(error, BricliOk);
 
@@ -294,7 +289,6 @@ namespace Cli {
         EXPECT_EQ(Argument_Handler_fake.call_count, 3);
         EXPECT_EQ(_cli.PendingBytes, 0);
         EXPECT_EQ(error, BricliOk);
-		printf("DONE\n");
     }
 
     TEST_F(HandlerTest, CommandNotFound)
