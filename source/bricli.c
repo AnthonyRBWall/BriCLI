@@ -284,6 +284,7 @@ BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* init)
         cli->AuthList = init->AuthList;
 
     // Success
+    BRICLI_LOG("BriCLI: Initialised\n");
     result = BricliOk;
 
 cleanup:
@@ -350,6 +351,7 @@ int Bricli_Parse(BricliHandle_t *cli)
     // giving us a zero-length command.
     if (cli->PendingBytes == strlen(cli->Eol))
     {
+        BRICLI_LOG("BriCLI: 0 length command received, skipping\n");
         Bricli_SendPrompt(cli);
         Bricli_ClearBuffer(cli);
         goto cleanup;
@@ -516,6 +518,7 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
             }
             else
             {
+                BRICLI_LOG("BriCLI: Attempted to call authorized command \"%s\" with invalid auth scope\n", command);
                 cli->LastError = BricliErrorInternal;
                 result = BricliUnauthorized;
 
