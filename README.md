@@ -97,6 +97,8 @@ add_subdirectory(bricli)
 target_link_libraries(my-app PUBLIC bricli)
 ```
 
+For built-alongside distributions copy the sources into your project and ensure to add the include path (`bricli/include`) to the project.
+
 ### Initialisation
 The basic pre-requisites for using BriCLI are the command list, the CLI settings, the BspWrite function and the RX buffer.
 ```c
