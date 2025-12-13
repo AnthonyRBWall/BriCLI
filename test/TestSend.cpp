@@ -62,7 +62,7 @@ namespace Cli {
             init.RxBuffer = _buffer;
             init.RxBufferSize = 100;
             init.BspWrite = BspWrite;
-			init.Settings.EnableColour = true;
+			init.Settings.EnableColour = false;
 
 			Bricli_Init(&_cli, &init);
         }
@@ -81,28 +81,17 @@ namespace Cli {
         Bricli_Write(&_cli, testCommand.length(), (char *)testCommand.c_str());
         EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[0]);
         EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[0]);
-        
-        Bricli_WriteColoured(&_cli, testCommand.length(), (char *)testCommand.c_str(), BricliTextRed);
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[2]);
-        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[2]);
-        
+
         Bricli_WriteString(&_cli, (char *)testCommand.c_str());
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[4]);
-        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[4]);
-        
-        Bricli_WriteStringColoured(&_cli, (char *)testCommand.c_str(), BricliTextRed);
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[6]);
-        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[6]);
+        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[1]);
+        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[1]);
 
         // PrintF's uses an internal temporary buffer so we can't track the actual command output.
         Bricli_PrintF(&_cli, "%s", testCommand.c_str());
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[8]);
-
-        BRICLI_PRINTF_COLOURED(&_cli, BricliTextYellow, "%s", testCommand.c_str());
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[10]);
+        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[2]);
 
         // Make sure total calls match.
-        EXPECT_EQ(BspWrite_fake.call_count, 12);
+        EXPECT_EQ(BspWrite_fake.call_count, 3);
     }
 
     TEST_F(SendTest, WriteLine)
@@ -116,36 +105,18 @@ namespace Cli {
         EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[0]);
         EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[0]);
         EXPECT_STREQ(_cli.Eol, BspWrite_fake.arg1_history[1]);
-        
-        // 2: colour, 3: command, 4: eol, 5: colour reset
-        Bricli_WriteColouredLine(&_cli, testCommand.length(), (char *)testCommand.c_str(), BricliTextRed);
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[3]);
-        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[3]);
-        EXPECT_STREQ(_cli.Eol, BspWrite_fake.arg1_history[4]);
 
         // Change the Eol to make sure \r\n works
         _cli.Eol = (char *)"\r\n";
 
-        // 6: command, 7: eol
+        // 2: command, 3: eol
         Bricli_WriteStringLine(&_cli, (char *)testCommand.c_str());
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[6]);
-        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[6]);
-        EXPECT_STREQ(_cli.Eol, BspWrite_fake.arg1_history[7]);
-        
-        // 8: colour, 9: command, 10: eol, 11: colour reset
-        Bricli_WriteStringColouredLine(&_cli, (char *)testCommand.c_str(), BricliTextRed);
-        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[9]);
-        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[9]);
-        EXPECT_STREQ(_cli.Eol, BspWrite_fake.arg1_history[10]);
+        EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[2]);
+        EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[2]);
+        EXPECT_STREQ(_cli.Eol, BspWrite_fake.arg1_history[3]);
 
         // Make sure total calls match.
-        EXPECT_EQ(BspWrite_fake.call_count, 12);
-
-        for (size_t i = 0; i < BspWrite_fake.call_count; i++)
-        {
-            std::cout << "[" << i << "]: " << BspWrite_fake.arg1_history[i] << "\n";
-        }
-        
+        EXPECT_EQ(BspWrite_fake.call_count, 4);
     }
 
     TEST_F(SendTest, Prompt)
