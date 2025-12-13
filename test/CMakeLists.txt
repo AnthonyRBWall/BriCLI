@@ -44,6 +44,15 @@ target_link_libraries(auth-test GTest::gtest_main bricli)
 target_compile_options(auth-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
 target_link_options(auth-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 
+# Add the colour test.
+add_executable(colour-test
+    ${TEST_DIR}/TestColour.cpp
+)
+target_include_directories(colour-test PUBLIC ${INC_DIR} ${LIB_DIR})
+target_link_libraries(colour-test GTest::gtest_main bricli)
+target_compile_options(colour-test PRIVATE ${GCC_COVERAGE_COMPILE_FLAGS})
+target_link_options(colour-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
+
 # Add the receive test.
 add_executable(receive-test
     ${TEST_DIR}/TestReceive.cpp
@@ -74,6 +83,7 @@ target_link_options(handler-test PRIVATE ${GCC_COVERAGE_LINK_FLAGS})
 # ---- Discover all GoogleTest binaries ----
 include(GoogleTest)
 gtest_discover_tests(auth-test PROPERTIES TEST_LIST unitTests)
+gtest_discover_tests(colour-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(receive-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(send-test PROPERTIES TEST_LIST unitTests)
 gtest_discover_tests(handler-test PROPERTIES TEST_LIST unitTests)
