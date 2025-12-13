@@ -90,9 +90,9 @@ namespace Cli
     {
         std::string testCommand("Some Response Data");
 
-        Bricli_WriteColouredLine(&_cli, testCommand.length(), (char *)testCommand.c_str(), BricliTextRed);
+        Bricli_WriteColouredLine(&_cli, testCommand.length(), (char *)testCommand.c_str(), BricliTextGreen);
         EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[1]);
-        EXPECT_STREQ("\e[0;31m", BspWrite_fake.arg1_history[0]);
+        EXPECT_STREQ("\e[0;32m", BspWrite_fake.arg1_history[0]);
         EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[1]);
         EXPECT_STREQ(_cli.Eol, BspWrite_fake.arg1_history[2]);
         EXPECT_STREQ("\e[0m", BspWrite_fake.arg1_history[3]);
@@ -102,9 +102,9 @@ namespace Cli
     {
         std::string testCommand("Some Response Data");
 
-        Bricli_WriteStringColoured(&_cli, (char *)testCommand.c_str(), BricliTextRed);
+        Bricli_WriteStringColoured(&_cli, (char *)testCommand.c_str(), BricliTextYellow);
         EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[1]);
-        EXPECT_STREQ("\e[0;31m", BspWrite_fake.arg1_history[0]);
+        EXPECT_STREQ("\e[0;33m", BspWrite_fake.arg1_history[0]);
         EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[1]);
         EXPECT_STREQ("\e[0m", BspWrite_fake.arg1_history[2]);
     }
@@ -113,9 +113,9 @@ namespace Cli
     {
         std::string testCommand("Some Response Data");
 
-        Bricli_WriteStringColouredLine(&_cli, (char *)testCommand.c_str(), BricliTextRed);
+        Bricli_WriteStringColouredLine(&_cli, (char *)testCommand.c_str(), BricliTextBlue);
         EXPECT_EQ(testCommand.length(), BspWrite_fake.arg0_history[1]);
-        EXPECT_STREQ("\e[0;31m", BspWrite_fake.arg1_history[0]);
+        EXPECT_STREQ("\e[0;34m", BspWrite_fake.arg1_history[0]);
         EXPECT_STREQ(testCommand.c_str(), BspWrite_fake.arg1_history[1]);
         EXPECT_STREQ(_cli.Eol, BspWrite_fake.arg1_history[2]);
         EXPECT_STREQ("\e[0m", BspWrite_fake.arg1_history[3]);
@@ -125,9 +125,9 @@ namespace Cli
     {
         std::string testCommand("Some Response Data");
 
-        BRICLI_PRINTF_COLOURED(&_cli, BricliTextYellow, "%s", testCommand.c_str());
+        BRICLI_PRINTF_COLOURED(&_cli, BricliTextMagenta, "%s", testCommand.c_str());
         EXPECT_EQ(testCommand.length(), strlen(&_stringHistory[1][0]));
-        EXPECT_STREQ("\e[0;33m", &_stringHistory[0][0]);
+        EXPECT_STREQ("\e[0;35m", &_stringHistory[0][0]);
         EXPECT_STREQ(testCommand.c_str(), &_stringHistory[1][0]);
         EXPECT_STREQ("\e[0m", &_stringHistory[2][0]);
     }
