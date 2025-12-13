@@ -8,26 +8,32 @@ cmake_minimum_required(VERSION  3.21)
 project(BriCLI
 	LANGUAGES C
 	VERSION 0.0.0
-	DESCRIPTION "An easy-to-use C99 Command Line Interface library"
+	DESCRIPTION "An easy-to-use CLI (Command Line Interface) library"
 )
 
 option(${PROJECT_NAME}_BUILD_TESTS "Enable to build unit tests" ON)
+option(${PROJECT_NAME}_BUILD_SAMPLES "Enable to build samples" ON)
 
 # ===========
 # == Paths ==
 # ===========
 
-set(SOURCE_DIR Source)
-set(INC_DIR Include)
-set(CONFIG_DIR Config)
-set(TEST_DIR Test)
+set(SOURCE_DIR source)
+set(INC_DIR include)
+set(CONFIG_DIR config)
+set(TEST_DIR test)
+set(SAMPLE_DIR examples)
 
 # =============
 # == Library ==
 # =============
 
-add_library(bricli SHARED
+add_library(bricli STATIC
+	${SOURCE_DIR}/auth.c
 	${SOURCE_DIR}/bricli.c
+	${SOURCE_DIR}/colours.c
+	${SOURCE_DIR}/system_commands.c
+	${SOURCE_DIR}/writer.c
 )
 target_include_directories(bricli PRIVATE
 	${SOURCE_DIR}
@@ -42,3 +48,9 @@ if (${PROJECT_NAME}_BUILD_TESTS)
 	enable_testing()
 	add_subdirectory(${TEST_DIR})
 endif() # ${PROJECT_NAME}_BUILD_TESTS
+
+# Sample projects
+if(${PROJECT_NAME}_BUILD_SAMPLES)
+	add_subdirectory(${SAMPLE_DIR}/basic)
+	add_subdirectory(${SAMPLE_DIR}/authentication)
+endif() # ${PROJECT_NAME}_BUILD_SAMPLES

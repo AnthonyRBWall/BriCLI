@@ -2,8 +2,6 @@
  * @file    bricli.c
  * @brief   BriCLI source, provides a lightweight CLI implementation.
  *          Supports VT100 ANSI escape codes.
- * @date    28/06/2021
- * @version 1
  * @author  Anthony Wall
  *
  * Copyright (C) 2025 Anthony Wall.
@@ -11,79 +9,29 @@
  *
  **/
 
-/* INCLUDES */
+// ====================
+// ===== Includes =====
+// ====================
+
 // Fix for "strtok_r" not found on default C99 GNU builds.
 #ifdef __GNUC__
     #define _GNU_SOURCE
 #endif // __GNUC__
+
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bricli.h"
+#include <bricli/bricli.h>
+#include "system_commands.h"
+#include "auth.h"
 
-/* CONSTANTS */
+// =====================
+// ===== Constants =====
+// =====================
 
-#if BRICLI_USE_COLOUR
-static const char *_colourReset = "\e[0m";
-
-#if BRICLI_USE_TEXT_COLOURS
-static const char *_colourTable[] =
-{
-    "\e[0;30m", // Black
-    "\e[0;31m", // Red
-    "\e[0;32m", // Green
-    "\e[0;33m", // Yellow
-    "\e[0;34m", // Blue
-    "\e[0;35m", // Magenta
-    "\e[0;36m", // Cyan
-    "\e[0;37m"  // White
-};
-#endif // BRICLI_USE_TEXT_COLOURS
-
-#if BRICLI_USE_BOLD
-static const char *_boldTable[] =
-{
-    "\e[1;30m", // Bold Black
-    "\e[1;31m", // Bold Red
-    "\e[1;32m", // Bold Green
-    "\e[1;33m", // Bold Yellow
-    "\e[1;34m", // Bold Blue
-    "\e[1;35m", // Bold Magenta
-    "\e[1;36m", // Bold Cyan
-    "\e[1;37m"  // Bold White
-};
-#endif // BRICLI_USE_BOLD
-
-#if BRICLI_USE_UNDERLINE
-static const char *_underlineTable[] =
-{
-    "\e[4;30m", // Underline Black
-    "\e[4;31m", // Underline Red
-    "\e[4;32m", // Underline Green
-    "\e[4;33m", // Underline Yellow
-    "\e[4;34m", // Underline Blue
-    "\e[4;35m", // Underline Magenta
-    "\e[4;36m", // Underline Cyan
-    "\e[4;37m"  // Underline White
-};
-#endif // BRICLI_USE_UNDERLINE
-
-#if BRICLI_USE_BACKGROUNDS
-static const char *_backgroundTable[] =
-{
-    "\e[40m", // Black Background
-    "\e[41m", // Red Background
-    "\e[42m", // Green Background
-    "\e[43m", // Yellow Background
-    "\e[44m", // Blue Background
-    "\e[45m", // Magenta Background
-    "\e[46m", // Cyan Background
-    "\e[47m"  // White Background
-};
-#endif // BRICLI_USE_BACKGROUNDS
-#endif // BRICLI_USE_COLOUR
-
-/* LOCAL FUNCTIONS */
+// ===========================
+// ===== Local Functions =====
+// ===========================
 
 /**
  * @brief Extracts arguments from a given argument string. Arguments must be separated by spaces.
@@ -95,68 +43,140 @@ static const char *_backgroundTable[] =
  */
 static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
 {
-    char seperator[] = " ";
+    // char seperator[] = " ";
     uint8_t argumentsFound = 0;
-    
-#if BRICLI_USE_REENTRANT
-    char *savePointer = NULL;
-#endif // BRICLI_USE_REENTRANT
+    // char *savePointer = NULL;
+    char *argumentsEnd = NULL;
+
+    // printf("[DEBUG] %s: %s\n", __func__, arguments);
 
     // Make sure we actually have something to work with.
-    if (arguments == NULL || output == NULL)
+    if (arguments == NULL || output == NULL || *arguments == '\0')
     {
         return 0;
     }
 
-    // Split the arguments.
-    #if BRICLI_USE_REENTRANT
-        char *token = (char *)strtok_r(arguments, seperator, &savePointer);
-    #else
-        char *token = (char *)strtok(arguments, seperator);
-    #endif // BRICLI_USE_REENTRANT
-    while (token != NULL && argumentsFound < BRICLI_MAX_ARGUMENTS)
+    // Find the end of the string
+    argumentsEnd = arguments + strlen(arguments);
+    // printf("[DEBUG] Args Tokenizer: %p to %p (strlen: %u)\n", arguments, argumentsEnd, (uint32_t)strlen(arguments));
+
+    // Setup tokenizer variables
+    char *argStart = arguments;
+    char *cursor = argStart;
+    bool isStringMode = false;
+    bool argFound = false;
+
+    // Run the tokenizer
+    while (argStart != argumentsEnd)
     {
+        char *argEnd = strchr(cursor, ' ');
+        bool moreArgs = (argEnd != NULL);
 
-        // This is actually a string argument, need to skip to the next quote mark.
-        if (*token == '\"')
+        // Normal parsing mode
+        if (!isStringMode)
         {
-            // Skip past the speech mark.
-            token++;
-
-            // If we aren't useing re-entrancy we need to calculate the next token point ahead of time.
-            #if !BRICLI_USE_REENTRANT
-                char* savePointer = token + strlen(token) + 1;
-            #endif // !BRICLI_USE_REENTRANT
-
-            // If strtok_r nulled out a space we need to re-add it.
-            if (savePointer != NULL && *(savePointer - 1) == '\0')
+            // String found, switch mode
+            if (*cursor == '\"')
             {
-                *(savePointer - 1) = ' ';
+                // printf("[DEBUG] Entering string mode\n");
+                isStringMode = true;
+
+                // Strip out the starting quote
+                strcpy(cursor, (cursor + 1));
+                argumentsEnd--;
             }
-
-            // Look for the closing quote mark.
-            char *quoteToken = strchr(savePointer, '\"');
-            if (quoteToken == NULL)
+            else
             {
-                // User didn't close out their speech mark so just bail out.
+                // Non-string arguments require no additional-processing
+                argFound = true;
+            }
+        }
+        // String parsing mode
+        else
+        {
+            // Search for the end sting
+            cursor = strchr(cursor, '\"');
+
+            // Missing closing quote mark, exit
+            if (NULL == cursor)
+            {
+                // printf("[DEBUG] Invalid string format\n");
                 return 0;
             }
+            else if (*(cursor - 1) == '\\')
+            {
+                // Escaped quote mark, ignore
+                // printf("[DEBUG] Skipping escape character\n");
+                cursor++;
+            }
+            else
+            {
+                // Closing quote mark, string found
+                // printf("[DEBUG] Exiting string mode\n");
 
-            // Replace the closing mark with a null character and step forward the save pointer.
-            *quoteToken = '\0';
-            savePointer = quoteToken + 1;
+                // Strip the quote mark out
+                strcpy(cursor, (cursor + 1));
+                argumentsEnd--;
+
+                // Move argEnd pointer and update tokenizer variables
+                argEnd = cursor;
+                argFound = true;
+                isStringMode = false;
+            }
         }
 
-        // Store this token and increment the arguments counter.
-        output[argumentsFound] = token;
-        argumentsFound++;
+        // An argument was found
+        if (argFound)
+        {
+            // Store the argument
+            output[argumentsFound] = argStart;
+            argumentsFound++;
 
-        // Get the next token.
-        #if BRICLI_USE_REENTRANT
-            token = (char *)strtok_r(NULL, seperator, &savePointer);
-        #else
-            token = (char *)strtok(NULL, seperator);
-        #endif // BRICLI_USE_REENTRANT
+            // Walk through the argument and replace any escapes
+            cursor = strchr(argStart, '\\');
+            while (NULL != cursor)
+            {
+                // printf("[DEBUG] Searching for '\\'\n");
+                cursor = strchr(cursor, '\\');
+                if (NULL != cursor && *cursor == '\\')
+                {
+                    // printf("[DEBUG] Replaced escaped character with %c\n", *(cursor+1));
+                    strcpy(cursor, (cursor + 1));
+                    cursor++;
+                    argumentsEnd--;
+
+                    if (NULL != argEnd)
+                    {
+                        // printf("[DEBUG] Moving argEnd\n");
+                        argEnd--;
+                    }
+                }
+            }
+
+
+            // Process additional arguments if required
+            if (!moreArgs)
+            {
+                // No more arguments
+                // printf("[DEBUG] Tokenizer finished\n");
+                argEnd = argumentsEnd;
+            }
+            else
+            {
+                // More arguments
+                // printf("[DEBUG] More arguments: %020x\n", *argEnd);
+                *argEnd = '\0';
+                argEnd++;
+            }
+
+            // printf("[DEBUG] Arg%d: %s\n", argumentsFound, argStart);
+
+            // Reset tokenizer
+            argFound = false;
+            argStart = argEnd;
+            cursor = argStart;
+
+        }
     }
 
     // Return how many arguments we were able to find.
@@ -165,7 +185,7 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
 
 /**
  * @brief Update the state of a given BriCLI handle, calling the event handler if set.
- * 
+ *
  * @param cli Pointer to the BriCLI instance to use.
  * @param newState The new state to set on the BriCLI instance.
  */
@@ -181,59 +201,95 @@ static inline void Bricli_ChangeState(BricliHandle_t* cli, BricliStates_t newSta
     }
 }
 
-/* FUNCTION DEFINITIONS */
+// ==============================
+// ===== Exported Functions =====
+// ==============================
 
-#if BRICLI_USE_COLOUR
 /**
- * @brief Sets the various colour options of a VT100 terminal.
- *
- * @param colourId The enum ID of the colour option to be written.
+ * @brief Initialises a BriCLI instance using the given settings list
+ * 
+ * @param cli Pointer to a BriCLI instance to initialise
+ * @param init Pointer to a settings list to use for instance customization
+ * @return BricliErrors_t 
  */
-void Bricli_SetColour(BricliHandle_t *cli, BricliColours_t colourId)
+BricliErrors_t Bricli_Init(BricliHandle_t *cli, const BricliInit_t* init)
 {
-    char *colourMessage = NULL;
+    BricliErrors_t result = BricliUnknown;
 
-    // Reset the VT100 terminal colour settings.
-    if (colourId == BricliColourReset)
+    // Validate pointers
+    if (NULL == cli || NULL == init)
     {
-        colourMessage = (char *)_colourReset;
+        BRICLI_LOG("BriCLI: NULL pointer in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
     }
-#if BRICLI_USE_TEXT_COLOURS
-    // Text colours.
-    else if (colourId <= BricliTextWhite)
-    {
-        colourMessage = (char *)_colourTable[colourId];
-    }
-#endif // BRICLI_USE_TEXT_COLOURSs
-#if BRICLI_USE_BOLD
-    // Bold colours
-    else if (colourId <= BricliTextBoldWhite)
-    {
-        colourMessage = (char *)_boldTable[colourId - BricliTextWhite];
-    }
-#endif // BRICLI_USE_BOLD
-#if BRICLI_USE_UNDERLINE
-    // Underline colours.
-    else if (colourId <= BricliUnderlineWhite)
-    {
-        colourMessage = (char *)_underlineTable[colourId - BricliTextBoldWhite];
-    }
-#endif // BRICLI_USE_UNDERLINE
-#if BRICLI_USE_BACKGROUNDS
-    // Background colours.
-    else if (colourId <= BricliBackgroundWhite)
-    {
-        colourMessage = (char *)_backgroundTable[colourId - BricliUnderlineWhite];
-    }
-#endif // BRICLI_USE_BACKGROUNDS
 
-    // Send the colour message if we have one.
-    if (colourMessage != NULL)
+    // Validate buffer settings
+    if (NULL == init->RxBuffer || 0 == init->RxBufferSize)
     {
-        Bricli_WriteString(cli, colourMessage);
+        BRICLI_LOG("BriCLI: Invalid RX buffer in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
     }
+
+    // Validate command list settings
+    if (NULL == init->CommandList || NULL == init->CommandList[0].Name)
+    {
+        BRICLI_LOG("BriCLI: Invalid Command List in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
+    }
+
+    // Validate BSP Write function
+    if (NULL == init->BspWrite)
+    {
+        BRICLI_LOG("BriCLI: Invalid BspWrite in %s\n", __func__);
+        result = BricliBadParameter;
+        goto cleanup;
+    }
+
+    // Initialise the CLI to zero
+    memset(cli, 0, sizeof(BricliHandle_t));
+
+    // EOL string
+    if (NULL != init->Eol)
+        cli->Eol = init->Eol;
+    else
+        cli->Eol = BRICLI_DEFAULT_EOL;
+
+    // Prompt string
+    if (NULL != init->Prompt)
+        cli->Prompt = init->Prompt;
+    else
+        cli->Prompt = BRICLI_DEFAULT_PROMPT;
+
+    // RX Buffer settings
+    cli->RxBuffer = init->RxBuffer;
+    cli->RxBufferSize = init->RxBufferSize;
+
+    // Command List settings
+    cli->CommandList = init->CommandList;
+
+    // BSP settings
+    cli->BspWrite = init->BspWrite;
+
+    // Event settings
+    cli->OnStateChanged = init->OnStateChanged;
+
+    // Runtime settings
+    memcpy(&cli->Settings, &init->Settings, sizeof(BricliSettings_t));
+
+    // Auth list
+    if (NULL != init->AuthList)
+        cli->AuthList = init->AuthList;
+
+    // Success
+    BRICLI_LOG("BriCLI: Initialised\n");
+    result = BricliOk;
+
+cleanup:
+    return result;
 }
-#endif // BRICLI_USE_COLOUR
 
 int Bricli_ParseEscapeCode(BricliHandle_t *cli)
 {
@@ -248,13 +304,13 @@ int Bricli_ParseEscapeCode(BricliHandle_t *cli)
 
 /**
  * @brief Removes a command from the receive buffer, moving any remaining commands to the front.
- * 
+ *
  * @param cli Pointer to a BriCLI instance.
  */
 void Bricli_ClearCommand(BricliHandle_t *cli)
 {
     size_t nextCommand = 0;
-    
+
     // If there is another command it will always be EOL length past our old command.
     nextCommand = strlen(cli->RxBuffer) + strlen(cli->Eol);
 
@@ -267,7 +323,7 @@ void Bricli_ClearCommand(BricliHandle_t *cli)
     {
         // Remove the number of bytes we have handled.
         cli->PendingBytes -= nextCommand;
-        
+
         // Shift next command to start of buffer
         memmove(cli->RxBuffer, &cli->RxBuffer[nextCommand], cli->PendingBytes);
         memset(&cli->RxBuffer[cli->PendingBytes], 0, nextCommand);
@@ -295,6 +351,7 @@ int Bricli_Parse(BricliHandle_t *cli)
     // giving us a zero-length command.
     if (cli->PendingBytes == strlen(cli->Eol))
     {
+        BRICLI_LOG("BriCLI: 0 length command received, skipping\n");
         Bricli_SendPrompt(cli);
         Bricli_ClearBuffer(cli);
         goto cleanup;
@@ -340,6 +397,7 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
 {
     char command[BRICLI_MAX_COMMAND_LEN + 1] = {0};
     char arguments[BRICLI_ARGUMENT_BUFFER_LEN] = {0};
+    char *ArgumentsFound[BRICLI_MAX_ARGUMENTS] = {0};
     uint32_t commandLength = 0;
     uint32_t argumentLength = 0;
 
@@ -394,61 +452,91 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     }
     memcpy(command, (void *)cli->RxBuffer, commandLength);
 
-    // Check if this is a system command first.
-    if (strcmp(command, "help") == 0)
+    // Extract additional arguments.
+    uint8_t numberOfArguments = Bricli_ExtractArguments(arguments, ArgumentsFound);
+
+    // Check if this is a system command.
+    const BricliSystemCommand_t *systemCommand = &SystemCommands[0];
+    while (systemCommand->ID != BricliSystemCommandNone)
     {
-        Bricli_ChangeState(cli, BricliStateHandlerRunning);
-        Bricli_PrintHelp(cli);
-        Bricli_ChangeState(cli, BricliStateFinished);
-        return BricliOk;
-    }
-    else if (strcmp(command, "clear") == 0)
-    {
-        Bricli_ChangeState(cli, BricliStateHandlerRunning);
-        Bricli_ClearScreen(cli);
-        Bricli_ChangeState(cli, BricliStateFinished);
-        return BricliOk;
+        // Don't display system auth commands if we aren't using auth
+        if (!cli->Settings.EnableAuth && (systemCommand->ID == BricliSystemCommandLogin || systemCommand->ID == BricliSystemCommandLogout))
+        {
+            systemCommand++;
+            continue;
+        }
+        
+        if (strcmp(command, systemCommand->Name) == 0)
+        {
+            // Call the command's handler function.
+            Bricli_ChangeState(cli, BricliStateHandlerRunning);
+            systemCommand->Handler(cli, numberOfArguments, ArgumentsFound);
+            Bricli_ChangeState(cli, BricliStateFinished);
+
+            return BricliOk;
+        }
+
+        // Increment the pointer
+        systemCommand++;
     }
 
     // Not a system command so look to our command list for a match.
-    BricliCommand_t *cliCommand = NULL;
-    for (uint8_t i = 0; i < cli->CommandListLength; i++)
+    BricliCommand_t *cliCommand = &cli->CommandList[0];
+    while(cliCommand->Name != NULL)
     {
-        // Get the next CLI Command reference.
-        cliCommand = &cli->CommandList[i];
-
         // Check if we have found a match.
         if (strcmp(command, cliCommand->Name) == 0)
         {
-            char *ArgumentsFound[BRICLI_MAX_ARGUMENTS] = {0};
+            int result = BricliUnknown;
 
-            // Extract additional arguments.
-            uint8_t numberOfArguments = Bricli_ExtractArguments(arguments, ArgumentsFound);
-
-            // Call the command's handler function.
-            Bricli_ChangeState(cli, BricliStateHandlerRunning);
-            int result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
-            Bricli_ChangeState(cli, BricliStateFinished);
-
-            // Check the result code.
-            if (result < 0)
+            // Check our authentication scopes
+            if (Bricli_IsCommandInScope(cli, cliCommand))
             {
-                // If enabled, display the error code to the user.
-#if BRICLI_SHOW_COMMAND_ERRORS
+                // Call the command's handler function.
+                Bricli_ChangeState(cli, BricliStateHandlerRunning);
+                result = cliCommand->Handler(numberOfArguments, ArgumentsFound);
+                Bricli_ChangeState(cli, BricliStateFinished);
+
+                // Check the result code.
+                if (result < 0)
+                {
+                    // If enabled, display the error code to the user.
+                    if (cli->Settings.ShowHandlerErrors)
+                    {
+                        if (cli->SendEol == NULL)
+                        {
+                            BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+                        }
+                        else
+                        {
+                            BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
+                        }
+                    }
+
+                    cli->LastError = BricliErrorCommand;
+                }
+            }
+            else
+            {
+                BRICLI_LOG("BriCLI: Attempted to call authorized command \"%s\" with invalid auth scope\n", command);
+                cli->LastError = BricliErrorInternal;
+                result = BricliUnauthorized;
+
                 if (cli->SendEol == NULL)
                 {
-                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->Eol);
+                    Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->Eol);
                 }
                 else
                 {
-                    BRICLI_PRINTF_COLOURED(cli, BricliTextRed, "Command returned error: %d%s", result, cli->SendEol);
+                    Bricli_PrintF(cli, "Unknown Command %s%s", command, cli->SendEol);
                 }
-#endif // BRICLI_SHOW_COMMAND_ERRORS
-
-                cli->LastError = BricliErrorCommand;
             }
+
             return result;
         }
+
+        // Increment the pointer
+        cliCommand++;
     }
 
     // If we get here then we failed to find a valid command in the list.
@@ -462,9 +550,10 @@ int Bricli_ParseCommand(BricliHandle_t *cli)
     }
 
     // If enabled, print help on an unknown command.
-#if BRICLI_SHOW_HELP_ON_ERROR
-    Bricli_PrintHelp(cli);
-#endif // BRICLI_SHOW_HELP_ON_ERROR
+    if (cli->Settings.ShowHelpOnError)
+    {
+        Bricli_PrintHelp(cli);
+    }
 
     // Return that this is an unknown command.
     cli->LastError = BricliErrorInternal;
@@ -525,9 +614,7 @@ size_t Bricli_SplitOnEol(BricliHandle_t *cli)
 {
     uint16_t numberOfCommands = 0;
     char *token = NULL;
-    #if BRICLI_USE_REENTRANT
-        char *lastToken = NULL;
-    #endif // BRICLI_USE_REENTRANT
+    char *lastToken = NULL;
 
     // Make sure our parameters are valid.
     if (cli == NULL || cli->Eol == NULL || cli->RxBuffer == NULL || cli->PendingBytes == 0)
@@ -536,21 +623,13 @@ size_t Bricli_SplitOnEol(BricliHandle_t *cli)
     }
 
     // Iterate over the buffer looking for EOLs.
-    #if BRICLI_USE_REENTRANT
-        token = (char *)strtok_r(cli->RxBuffer, cli->Eol, &lastToken);
-    #else
-        token = (char *)strtok(cli->RxBuffer, cli->Eol);
-    #endif // BRICLI_USE_REENTRANT
-    
+    token = (char *)strtok_r(cli->RxBuffer, cli->Eol, &lastToken);
+
     while (token != NULL)
     {
         // Increment the number of commands and get the next token.
         numberOfCommands++;
-        #if BRICLI_USE_REENTRANT
-            token = (char *)strtok_r(NULL, cli->Eol, &lastToken);
-        #else
-            token = (char *)strtok(NULL, cli->Eol);
-        #endif // BRICLI_USE_REENTRANT
+        token = (char *)strtok_r(NULL, cli->Eol, &lastToken);
     }
 
     // Edge case: If no delimiters were present the length of the buffer will match pending bytes exactly.
@@ -611,7 +690,7 @@ BricliErrors_t Bricli_ReceiveCharacter(BricliHandle_t *cli, char rxChar)
     }
 
     // Echo the received character.
-    if (cli->LocalEcho)
+    if (cli->Settings.EnableLocalEcho)
     {
         Bricli_Write(cli, 1, &rxChar);
     }
@@ -651,110 +730,8 @@ BricliErrors_t Bricli_ReceiveIndexedArray(BricliHandle_t *cli, uint32_t index, u
     return error;
 }
 
-/**
-  * @brief Updates the pending bytes count and transmits a VT100 backspace response.
-  * @param cli Pointer to the CLI instance to use.
-  */
-void Bricli_Backspace(BricliHandle_t *cli)
-{   
-    
-    // If there is less than 2 bytes in the buffer there is nothing to be deleted.
-    if (cli->PendingBytes < 2)
-    {
-        cli->PendingBytes = 0;
-    }
-    // If there is more than 2 bytes we must tell the VT100 terminal to delete a character.
-    else
-    {
-        // Move the pending bytes value back by two characters and ensure the backsapce is nulled.
-        cli->PendingBytes -= 2;
-        cli->RxBuffer[cli->PendingBytes + 1] = '\0';
-
-        // Send the backspace and the VT100 delete.
-        Bricli_Write(cli, 1, "\b");
-        Bricli_Write(cli, 3, BRICLI_DELETE_CHAR);
-    }
-}
-
-/**
-  * @brief Helper function for sending formatted messages through a CLI instance.
-  *
-  * @param cli Pointer to a BriCLI instance.
-  * @param format Format string to be used for message generation.
-  *
-  * @return The error code from the instance's BSP write.
-  */
-int Bricli_PrintHelp(BricliHandle_t *cli)
-{
-    BricliCommand_t *command = NULL;
-
-    // Print the system commands first.
-    Bricli_WriteStringLine(cli, "help - Displays this help message");
-    Bricli_WriteStringLine(cli, "clear - Clears the terminal");
-
-    // Print the user commands.
-    for (uint8_t i = 0; i < cli->CommandListLength; i++)
-    {
-        command = &cli->CommandList[i];
-
-        // Send the help message for each command.
-        if (command->HelpMessage == NULL)
-        {
-            if (cli->SendEol == NULL)
-            {
-                Bricli_PrintF(cli, "%s%s", command->Name, cli->Eol);
-            }
-            else
-            {
-                Bricli_PrintF(cli, "%s%s", command->Name, cli->SendEol);
-            }
-        }
-        else
-        {
-            if (cli->SendEol == NULL)
-            {
-                Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->Eol);
-            }
-            else
-            {
-                Bricli_PrintF(cli, "%s - %s%s", command->Name, command->HelpMessage, cli->SendEol);
-            }
-        }
-    }
-    return 0;
-}
-
-/**
- * @brief Helper function for sending formatted messages through a CLI instance.
- *
- * @param cli Pointer to a BriCLI instance.
- * @param format Format string to be used for message generation.
- *
- * @return The error code from the instance's BSP write.
- */
-int Bricli_PrintF(BricliHandle_t *cli, const char *format, ...)
-{
-    char message[BRICLI_PRINT_MESSAGE_SIZE] = {0};
-    int bytesWritten = 0;
-    int result = -1;
-
-    // Format the message.
-    va_list args;
-    va_start(args, format);
-    bytesWritten = vsnprintf(message, BRICLI_PRINT_MESSAGE_SIZE, format, args);
-    va_end(args);
-
-    // Send the formatted message if it was fully written.
-    if (bytesWritten > 0 && bytesWritten < BRICLI_PRINT_MESSAGE_SIZE)
-    {
-        result = Bricli_Write(cli, bytesWritten, message);
-    }
-
-    return result;
-}
-
 /** @brief Helper function that clears the internal buffer and resets the CLI state.
- * 
+ *
  * @param cli Pointer to a BriCLI instance.
  */
 void Bricli_Reset(BricliHandle_t *cli)

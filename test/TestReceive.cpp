@@ -4,7 +4,7 @@
 #include <FFF/fff.h>
 DEFINE_FFF_GLOBALS;
 
-#include "bricli.h"
+#include <bricli/bricli.h>
 
 // Setup fake functions
 FAKE_VALUE_FUNC(int, BspWrite, uint32_t, const char*);
@@ -15,11 +15,12 @@ namespace Cli {
     class ReceiveTest: public ::testing::Test
     {
     protected:
-        BricliCommand_t _commandList[1] =
+        BricliCommand_t _commandList[2] =
         {
-            {"test", Test_Handler, "Tests."}
+            {"test", Test_Handler, "Tests", BricliScopeAll},
+			BRICLI_COMMAND_LIST_TERMINATOR
         };
-        BricliHandle_t _cli = BRICLI_HANDLE_DEFAULT;
+        BricliHandle_t _cli;
         char _buffer[100] = {0};
 
         ReceiveTest() { }
@@ -36,12 +37,14 @@ namespace Cli {
             Test_Handler_fake.return_val = (int)BricliOk;
 
             // Configure our default BriCLI settings.
-            _cli.CommandList = _commandList;
-            _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-            _cli.RxBuffer = _buffer;
-            _cli.RxBufferSize = 100;
-            _cli.BspWrite = BspWrite;
-            _cli.LocalEcho = true;
+            BricliInit_t init = {0};
+			init.CommandList = _commandList;
+            init.RxBuffer = _buffer;
+            init.RxBufferSize = 100;
+            init.BspWrite = BspWrite;
+            init.Settings.EnableLocalEcho = true;
+
+			Bricli_Init(&_cli, &init);
         }
 
         virtual void TearDown() 
@@ -49,15 +52,6 @@ namespace Cli {
             Bricli_ClearBuffer(&_cli);
         }
     };
-
-    TEST_F(ReceiveTest, Init)
-    {
-        EXPECT_EQ(_cli.Eol, "\n");
-        EXPECT_EQ(_cli.RxBufferSize, 100);
-        EXPECT_EQ(_cli.RxBuffer, _buffer);
-        EXPECT_EQ(_cli.Prompt, ">> ");
-        EXPECT_EQ(_cli.State, BricliStateIdle);
-    }
 
     TEST_F(ReceiveTest, ReceiveLine)
     {
@@ -192,7 +186,7 @@ namespace Cli {
         // Reset and turn off echo.
         Bricli_Reset(&_cli);
         RESET_FAKE(BspWrite);
-        _cli.LocalEcho = false;
+        _cli.Settings.EnableLocalEcho = false;
 
         // Ensure that echo wasn't called.
         Bricli_ReceiveArray(&_cli, testData.length(), (char *)testData.c_str());

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "bricli.h"
+#include <bricli/bricli.h>
 
 #define RX_BUFFER_SIZE  80 // Size of the internal RX Buffer.
 
@@ -19,8 +19,8 @@ static BricliCommand_t _commandList[] =
     { "ping", Ping_Handler, "Responds with Pong."                                },
     { "add",  Add_Handler,  "Adds two numbers together and prints the response." },
     { "echo", Echo_Handler, "Echoes what is sent"                                },
-    { "exit", Exit_Handler, "Exits the application"                              }
-
+    { "exit", Exit_Handler, "Exits the application"                              },
+	BRICLI_COMMAND_LIST_TERMINATOR
 };
 
 static int CustomWrite(uint32_t length, const char* data)
@@ -31,13 +31,19 @@ static int CustomWrite(uint32_t length, const char* data)
 int main(int argc, char const *argv[])
 {
     // Setup the CLI
-    _cli.Eol = "\n";
-    _cli.BspWrite = CustomWrite;
-    _cli.RxBuffer = _rxBuffer;
-    _cli.RxBufferSize = RX_BUFFER_SIZE;
-    _cli.CommandList = _commandList;
-    _cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-    _cli.Prompt = ">> ";
+	BricliInit_t init = {0};
+    init.BspWrite = CustomWrite;
+    init.RxBuffer = _rxBuffer;
+    init.RxBufferSize = RX_BUFFER_SIZE;
+    init.CommandList = _commandList;
+    
+    // Configure runtime settings
+    init.Settings.EnableColour = true;
+    init.Settings.EnableLocalEcho = true;
+    init.Settings.ShowHelpOnError = true;
+    init.Settings.ShowHandlerErrors = true;
+
+    Bricli_Init(&_cli, &init);
 
     // Send the initial prompt.
     Bricli_SendPrompt(&_cli);

@@ -1,55 +1,103 @@
 # BriCLI
 BriCLI (pronounced Bric-lee) is an easy-to-use C Command Line Interface library 
 
-![BriCLI Output](Images/BriCLI.png "BriCLI Output")
+![BriCLI Output](images/BriCLI.png "BriCLI Output")
+
+## Contents 
+- [BriCLI](#bricli)
+  - [Contents](#contents)
+  - [A Note About Escape Codes](#a-note-about-escape-codes)
+  - [Install Guide](#install-guide)
+  - [Configuration](#configuration)
+  - [Compile-time](#compile-time)
+  - [Runtime](#runtime)
+  - [Examples](#examples)
+  - [Porting Guide](#porting-guide)
+  - [User Guide](#user-guide)
+    - [Adding BriCLI to your project](#adding-bricli-to-your-project)
+    - [Initialisation](#initialisation)
+    - [Basic Command Loop](#basic-command-loop)
+    - [Different Send and Receive EoLs](#different-send-and-receive-eols)
+      - [Normal operation with just Eol](#normal-operation-with-just-eol)
+      - [Seperate operation with Eol and SendEol](#seperate-operation-with-eol-and-sendeol)
+    - [Custom Parsing](#custom-parsing)
+    - [State Change Events](#state-change-events)
+    - [Command Handlers](#command-handlers)
+    - [Command List](#command-list)
+    - [Built-In Commands](#built-in-commands)
+    - [Authentication](#authentication)
+
 
 ## A Note About Escape Codes
 Currently escape codes aren't supported, it is recommended that your application ignore escape codes prior to them reaching BriCLI as shown in the examples.
 
 ## Install Guide
-The only required files are the `Source/bricli.c`, `Source/bricli.h` and `Config/bricli_config.h`, these contain the full BriCLI functionality.
+Three sets of files are required for adding BriCLI to your project:
+- `source/bricli.c`: This is the main C file for the project and should be built under your application
+- `include`: This directory should be added to your application's include path, you can then leverage `#include <bricli/bricli.h>` to use BriCLI functions.
+- `config/bricli_config.h`: This contains the configuration settings used to modify BriCLI behaviour for your application's needs
 
-Always obtain the source files from the latest [release](https://github.com/AntonTheGoblin/BriCLI/releases) to ensure best compatibility.
+Always obtain the source files from the latest [release](https://github.com/AnthonyRBWall/BriCLI/releases) to ensure best compatibility.
 
 ```bash
-git clone --depth 1 --branch "<release>" git@github.com:AntonTheGoblin/BriCLI.git
+git clone --depth 1 --branch "<release>" git@github.com:AnthonyRBWall/BriCLI.git
 ```
 
-You can clone older releases if needed, such as the `1.1.0-beta` build:
+You can clone older releases if needed, such as the `v1.0.0` build:
 
 ```bash
-git clone --depth 1 --branch "1.1.0-beta" git@github.com:AntonTheGoblin/BriCLI.git
+git clone --depth 1 --branch "v1.0.0" git@github.com:AnthonyRBWall/BriCLI.git
 ```
 
 ## Configuration
-There are several settings that can be applied to BriCLI via the `bricli_config.h` file, they are listed below:
+## Compile-time
+There are several compile time settings that can be applied to BriCLI via the `bricli_config.h` file, they are listed below:
 
 | Setting | Default | Description |
 | --- | --- | --- |
-| **BRICLI_SHOW_COMMAND_ERRORS** | On | When on, BriCLI will automatically report command handler errors to the user |
-| **BRICLI_SHOW_HELP_ON_ERROR** | On | When on, BriCLI will automatically show the help message when an unknown command is received |
-| **BRICLI_USE_REENTRANT** | Off | When on, BriCLI will use the thread safe `strtok_r` in place of `strtok` |
-| **BRICLI_USE_COLOUR** | On | When on, enables the use of VT100 colour commands |
 | **BRICLI_MAX_COMMAND_LEN** | 10 | The maximum length any user command can be |
 | **BRICLI_ARGUMENT_BUFFER_LEN** | 70 | The length of the internal arguments buffer |
 | **BRICLI_MAX_ARGUMENTS** | 3 | The maximum number of arguments BriCLI can parse |
 | **BRICLI_PRINT_MESSAGE_SIZE** | 80 | The maximum length a PrintF message can be |
-| **BRICLI_USE_TEXT_COLOURS** | On | Enables the use of VT100 text colours |
-| **BRICLI_USE_BOLD** | On | Enables the use of VT100 bold text colours |
-| **BRICLI_USE_UNDERLINE** | On | Enables the use of VT100 underline colours |
-| **BRICLI_USE_BACKGROUNDS** | On | Enables the use of VT100 background colours |
+
+## Runtime
+In addition to compile time settings that modify fixed behaviours, runtime settings are stored in `cli.Settings` can be changed during the lifetime of a BriCLI instance:
+| Setting | Description |
+| --- | --- |
+| EnableAuth | Allow the use of authentication features |
+| EnableColour | Allow the use of VT100 colour options |
+| EnableLocalEcho | Echo received characters back to the caller |
+| ShowHandlerErrors | Automatically report command handler error codes |
+| ShowHelpOnError | Print the help message on receipt of an unkown command |
 
 ## Examples
 An example application for using BriCLI on various platforms can be found under the Examples directory. Currently the following examples are supported:
 
-- Simple CLI for use on most x86/x64 systems
+- Simple CLI: The ideal starting point for most users, covers core functionality
+- Authentication CLI: Demonstrates how to register authenticated users and scoped commands
 
 ## Porting Guide
 The only port functionality required by BriCLI is the BspWrite function, this must be provided by the developer in all circumstances.
 
 ## User Guide
 ### Adding BriCLI to your project
-BriCLI is contained entirely in a single source and header pair, simply copy these files into your application and use `#include "bricli.h"` anywhere you want to call the BriCLI API.
+BriCLI is typically distributed as a static library alongside a set of public headers, to enable BriCLi in your application:
+- Compile for your target system
+- Link BriCLI in your application (`-lbricli`)
+- Add the include path (`-Ibricli/include`) 
+- Add `#include <bricli/bricli.h>` to any sources where you want to call the BriCLI API.
+
+If linking BriCLI from source, use CMake to connect:
+
+```cmake
+# Build BriCLI
+add_subdirectory(bricli)
+
+# Link with the application
+target_link_libraries(my-app PUBLIC bricli)
+```
+
+For built-alongside distributions copy the sources into your project and ensure to add the include path (`bricli/include`) to the project.
 
 ### Initialisation
 The basic pre-requisites for using BriCLI are the command list, the CLI settings, the BspWrite function and the RX buffer.
@@ -58,20 +106,25 @@ static BricliCommand_t _commandList[] =
 {
     {"ping", Ping_Handler, "Responds with Pong."},
     {"add", Add_Handler, "Adds two numbers together and prints the response."},
-    {"colours", Colour_Handler, "Demonstrates VT100 colours."}
+    {"colours", Colour_Handler, "Demonstrates VT100 colours."},
+	BRICLI_COMMAND_LIST_TERMINATOR
 };
 
 int main(void)
 {
-    BricliHandle_t cli = BRICLI_HANDLE_DEFAULT;
-    cli.Eol = "\r";     
-    cli.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
-    cli.BspWrite = Bsp_Write;
-    cli.CommandList = _commandList;
-    cli.CommandListLength = BRICLI_STATIC_ARRAY_SIZE(_commandList);
-    cli.RxBuffer = _rxBuffer;
-    cli.RxBufferSize = RX_BUFFER_SIZE;
-    cli.LocalEcho = true;
+    BricliHandle_t cli;
+	BricliInit_t cliInit = {0};
+
+    cliInit.Eol = "\r";     
+    cliInit.SendEol = NULL; // Set this to have BriCLI use a different EoL in Bricli_WriteLine* functions.
+    cliInit.BspWrite = Bsp_Write;
+    cliInit.CommandList = _commandList;
+    cliInit.RxBuffer = _rxBuffer;
+    cliInit.RxBufferSize = RX_BUFFER_SIZE;
+    cliInit.Settings.EnableLocalEcho = true;
+    cliInit.Settings.EnableColour = true; // Set this to have BriCLI use VT100 colours
+
+	Bricli_Init(&cli, &cliInit);
     
     // ...
 }
@@ -100,7 +153,7 @@ void SomeTask()
             } while (msgFound);
         }
 
-        // As of v2.2.0 this is only needed when cli.LocalEcho is false
+        // As of v2.2.0 this is only needed when cli.Settings.EnableLocalEcho is false
         // Echo the character back to the terminal.
         // Bricli_Write(&cli, 1, &rxChar);
 
@@ -244,5 +297,36 @@ There are two built in commands that are provided by BriCLI <code>clear</code> a
 
 <code>help</code> will display all commands in the cli's command list, including built-in commands, along with their HelpMessage if one was provided
 
-![BriCLI Help Output](Images/BriCLIHelp.png "Help Message Output")
+![BriCLI Help Output](images/BriCLIHelp.png "Help Message Output")
+
+### Authentication
+BriCLI offers a built-in scope based authentication system based loosely on AuthN/AuthZ practices. The default scope for commands is `BricliScopeAll` which can be accessed by all users, including those not authenticated
+
+Authentication (AuthN) is the process of a user logging in, BriCLI does this using the `login <user> <pass>` system command.
+
+BriCLI then checks the init provided `AuthList` for a match, if one is found the authorization (AuthZ) scopes are applied and all relevant commands are unlocked for use.
+
+In the sample below the commands `ping` and `exit` are available to all users of the CLI, even those not logged in. The `info` command is available to user1 and admin while the `reset` command is only available to admin.
+
+Scopes can be extended with up to 30 additional flags (1 for each 32bit entry). The Admin `(1 << 1)` and User `(1 << 0)` scopes are provided for convenience.
+
+```c
+static BricliCommand_t _commandList[] =
+{
+    { "ping", Ping_Handler, "Pong!", BricliScopeAll },
+	{ "info", Info_Handler, "Display system status", BricliScopeUser },
+    { "reset", Reset_Handler, "Force a device reset", BricliScopeAdmin },
+    { "exit", Exit_Handler, "Exits the application", BricliScopeAll }
+};
+
+static BricliAuthEntry_t _authList[] =
+{
+	{"user1", "somePass", BricliScopeUser},
+	{"admin", "Pass123", (BricliScopeAdmin | BricliScopeUser)}
+};
+```
+
+The `logout` command can be used to reset authorization scopes.
+
+![BriCLI Authorization Output](images/BriCLIAuthentication.png "Authorization Output")
 
