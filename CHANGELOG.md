@@ -9,4 +9,4 @@
 
 # v1.0.0 (26/09/2025)
 ## Added
-- Initiale public release!
+- Initial public release!
