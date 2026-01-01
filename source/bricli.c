@@ -125,6 +125,9 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
                 argFound = true;
                 isStringMode = false;
                 activeQuote = '\0';
+
+                // Since we handled a string, it's possible we false-positive more arguments so reassess
+                moreArgs = (strchr(cursor, ' ') != NULL);
             }
         }
 
