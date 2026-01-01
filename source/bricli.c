@@ -63,6 +63,7 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
     // Setup tokenizer variables
     char *argStart = arguments;
     char *cursor = argStart;
+    char activeQuote = '\0';
     bool isStringMode = false;
     bool argFound = false;
 
@@ -76,10 +77,11 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
         if (!isStringMode)
         {
             // String found, switch mode
-            if (*cursor == '\"')
+            if (*cursor == '\"' || *cursor == '\'')
             {
                 // printf("[DEBUG] Entering string mode\n");
                 isStringMode = true;
+                activeQuote = *cursor;
 
                 // Strip out the starting quote
                 strcpy(cursor, (cursor + 1));
@@ -95,7 +97,7 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
         else
         {
             // Search for the end sting
-            cursor = strchr(cursor, '\"');
+            cursor = strchr(cursor, activeQuote);
 
             // Missing closing quote mark, exit
             if (NULL == cursor)
@@ -122,6 +124,10 @@ static uint32_t Bricli_ExtractArguments(char *arguments, char *output[])
                 argEnd = cursor;
                 argFound = true;
                 isStringMode = false;
+                activeQuote = '\0';
+
+                // Since we handled a string, it's possible we false-positive more arguments so reassess
+                moreArgs = (strchr(cursor, ' ') != NULL);
             }
         }
 

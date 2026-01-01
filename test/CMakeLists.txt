@@ -9,7 +9,7 @@ project(BriCLI VERSION 1.0
 set(CMAKE_CXX_STANDARD 11)
 
 # Build flags to enable code coverage tests.
-SET(GCC_COVERAGE_COMPILE_FLAGS -fprofile-arcs -ftest-coverage -Wall -DUNIT_TEST)
+SET(GCC_COVERAGE_COMPILE_FLAGS -fprofile-arcs -ftest-coverage -Wall -DUNIT_TEST -Og)
 SET(GCC_COVERAGE_LINK_FLAGS    -fprofile-arcs -lgcov)
 
 # Set up directory paths

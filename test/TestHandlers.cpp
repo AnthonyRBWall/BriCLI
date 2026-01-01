@@ -15,6 +15,8 @@ FAKE_VOID_FUNC(Test_StateChanged, BricliStates_t, BricliStates_t);
 static char _stringHistory[50][80] = {0};
 static uint8_t _stringHistoryCount = 0;
 
+static std::vector<std::string> _expectedArguments;
+
 int CustomBspWriteFake(uint32_t length, const char* data)
 {
 	printf("%s", data);
@@ -31,12 +33,14 @@ namespace Cli {
     // Test function used for debugging handler passing.
     int ArgumentTest_Handler(uint32_t numberOfArgs, char **args)
     {
+        EXPECT_EQ(_expectedArguments.size(), numberOfArgs);
+
         for (uint32_t i = 0; i < numberOfArgs; i++)
         {
-            EXPECT_TRUE(NULL != args[i]);
+            EXPECT_STREQ(_expectedArguments[i].c_str(), args[i]);
             std::cout << "Argument [" << i << "] " << args[i] << std::endl;
         }
-        return 0;
+        return Argument_Handler_fake.return_val;
     }
 
     class HandlerTest: public ::testing::Test
@@ -65,6 +69,7 @@ namespace Cli {
 			// Reset string history
 			memset(&_stringHistory[0][0], 0, (50 * 80));
 			_stringHistoryCount = 0;
+            _expectedArguments.clear();
 
 			// Pre-load return values for the fakes.
             BspWrite_fake.return_val = (int)BricliOk;
@@ -205,34 +210,55 @@ namespace Cli {
         std::string testCommandOneArgs("args 52\n");
         std::string testCommandNoArgs("args\n");
         std::string testCommandSingleStringArgs("args \"Word\"\n");
+        std::string testCommandStringSingleQuotes("args \'Word\'\n");
         BricliErrors_t error = BricliUnknown;
+
+        // Inject our custom fake handler
+        Argument_Handler_fake.custom_fake = ArgumentTest_Handler;
 
         // Receive the command.
         error = Bricli_ReceiveArray(&_cli, testCommandTwoArgs.length(), (char *)testCommandTwoArgs.c_str());
         EXPECT_EQ(error, BricliOk);
 
         // Parse and check the handler passed the arguments through ok.
+        _expectedArguments.push_back("Hello World");
+        _expectedArguments.push_back("43");
         error = (BricliErrors_t)Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 1);
         EXPECT_EQ(2, Argument_Handler_fake.arg0_val);
         EXPECT_EQ(error, BricliOk);
+        _expectedArguments.clear();
 
         // Repeat with 1 and 0 arguments.
+        _expectedArguments.push_back("52");
         Bricli_ReceiveArray(&_cli, testCommandOneArgs.length(), (char *)testCommandOneArgs.c_str());
         Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 2);
         EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
+        _expectedArguments.clear();
 
+        // Repeat with no arguments
         Bricli_ReceiveArray(&_cli, testCommandNoArgs.length(), (char *)testCommandNoArgs.c_str());
         Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 3);
         EXPECT_EQ(0, Argument_Handler_fake.arg0_val);
+        _expectedArguments.clear();
 
 		// Repeat with single word string
+        _expectedArguments.push_back("Word");
 		Bricli_ReceiveArray(&_cli, testCommandSingleStringArgs.length(), (char *)testCommandSingleStringArgs.c_str());
         Bricli_Parse(&_cli);
         EXPECT_EQ(Argument_Handler_fake.call_count, 4);
         EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
+        _expectedArguments.clear();
+
+        // Repeat with single quote string
+        _expectedArguments.push_back("Word");
+        Bricli_ReceiveArray(&_cli, testCommandStringSingleQuotes.length(), (char *)testCommandStringSingleQuotes.c_str());
+        Bricli_Parse(&_cli);
+        EXPECT_EQ(Argument_Handler_fake.call_count, 5);
+        EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
+        _expectedArguments.clear();
     }
 
 	TEST_F(HandlerTest, EscapedArguments)
@@ -240,7 +266,32 @@ namespace Cli {
 		std::string testCommand("args \"This is a \\\"substring\\\"\"\n");
 		BricliErrors_t error = BricliUnknown;
 
+        // Setup custom fake
+        Argument_Handler_fake.custom_fake = ArgumentTest_Handler;
+
 		// Receive the command.
+        error = Bricli_ReceiveArray(&_cli, testCommand.length(), (char *)testCommand.c_str());
+        EXPECT_EQ(error, BricliOk);
+
+		// Parse and check the handler passed the arguments through ok.
+        _expectedArguments.push_back("This is a \"substring\"");
+        error = (BricliErrors_t)Bricli_Parse(&_cli);
+        EXPECT_EQ(Argument_Handler_fake.call_count, 1);
+        EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
+        EXPECT_EQ(error, BricliOk);
+        _expectedArguments.clear();
+    }
+
+    TEST_F(HandlerTest, EmbeddedStringArgument)
+	{
+		std::string testCommand("args \"Hello 'World'\"\n");
+		BricliErrors_t error = BricliUnknown;
+
+        // Setup custom fake
+        Argument_Handler_fake.custom_fake = ArgumentTest_Handler;
+
+        // Receive the command.
+        _expectedArguments.push_back("Hello \'World\'");
         error = Bricli_ReceiveArray(&_cli, testCommand.length(), (char *)testCommand.c_str());
         EXPECT_EQ(error, BricliOk);
 
@@ -249,9 +300,7 @@ namespace Cli {
         EXPECT_EQ(Argument_Handler_fake.call_count, 1);
         EXPECT_EQ(1, Argument_Handler_fake.arg0_val);
         EXPECT_EQ(error, BricliOk);
-
-		// Check the response
-		// EXPECT_STREQ("This is a \"substring\"", Argument_Handler_fake.arg1_val[0]);
+        _expectedArguments.clear();
 	}
 
     TEST_F(HandlerTest, MultipleCommands)

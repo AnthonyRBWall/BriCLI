@@ -42,6 +42,9 @@ target_include_directories(bricli PRIVATE
 target_include_directories(bricli PUBLIC
 	${INC_DIR}
 )
+target_compile_options(bricli PRIVATE
+	$<$<NOT:$<CONFIG:Release>>:-Og>
+)
 
 # Only build the test exe if we are compiling for host
 if (${PROJECT_NAME}_BUILD_TESTS)
